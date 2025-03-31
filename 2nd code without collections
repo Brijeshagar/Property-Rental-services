@@ -1,0 +1,186 @@
+import java.io.*;
+import java.util.*;
+import java.util.Scanner;
+
+// Interface for housing
+interface Housing {
+    void displayDetails();
+    double calculateDiscount(int months);
+}
+
+// Abstract class Property
+abstract class Property implements Housing {
+    protected String name;
+    protected String type;
+    protected String location;
+    protected double rent;
+    protected boolean wifi;
+    protected boolean meals;
+    protected double rating;
+    
+    public Property(String name, String type, String location, double rent, 
+                   boolean wifi, boolean meals, double rating) {
+        this.name = name;
+        this.type = type;
+        this.location = location;
+        this.rent = rent;
+        this.wifi = wifi;
+        this.meals = meals;
+        this.rating = rating;
+    }
+    
+    public void displayDetails() {
+        System.out.println("Property: " + name);
+    }
+    
+    public void displayDetails(boolean showAll) {
+        if (showAll) {
+            System.out.println("Property: " + name);
+            System.out.println("Type: " + type);
+            System.out.println("Location: " + location);
+            System.out.println("Rent: ₹" + rent + "/month");
+            System.out.println("WiFi: " + (wifi ? "Yes" : "No"));
+            System.out.println("Meals: " + (meals ? "Yes" : "No"));
+            System.out.println("Rating: " + rating + "/5");
+        } else {
+            displayDetails();
+        }
+    }
+    
+    public abstract String getFacilities();
+}
+
+// Hostel class
+class Hostel extends Property {
+    private boolean laundry;
+    private boolean mess;
+    
+    public Hostel(String name, String type, String location, double rent, 
+                 boolean wifi, boolean meals, double rating, boolean laundry, boolean mess) {
+        super(name, type, location, rent, wifi, meals, rating);
+        this.laundry = laundry;
+        this.mess = mess;
+    }
+    
+    @Override
+    public String getFacilities() {
+        return "Laundry: " + (laundry ? "Yes" : "No") + ", Mess: " + (mess ? "Yes" : "No");
+    }
+    
+    @Override
+    public double calculateDiscount(int months) {
+        if (months >= 12) {
+            return rent * 0.85; // 15% discount for yearly stay
+        }
+        return rent;
+    }
+}
+
+// Hostel Booking System
+class HousingSystem {
+    private List<Property> properties;
+
+    public HousingSystem() {
+        properties = new ArrayList<>();
+    }
+    
+    public void loadPropertiesFromFile(String filename) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(","); // Assuming CSV format
+                if (data.length == 9) {
+                    String name = data[0];
+                    String type = data[1];
+                    String location = data[2];
+                    double rent = Double.parseDouble(data[3]);
+                    boolean wifi = Boolean.parseBoolean(data[4]);
+                    boolean meals = Boolean.parseBoolean(data[5]);
+                    double rating = Double.parseDouble(data[6]);
+                    boolean laundry = Boolean.parseBoolean(data[7]);
+                    boolean mess = Boolean.parseBoolean(data[8]);
+                    properties.add(new Hostel(name, type, location, rent, wifi, meals, rating, laundry, mess));
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+    }
+    
+    public void addProperty(Property property) {
+        properties.add(property);
+    }
+    
+    public void displayAllProperties() {
+        for (Property p : properties) {
+            p.displayDetails(true);
+            System.out.println("Facilities: " + p.getFacilities());
+            System.out.println("-----------------------");
+        }
+    }
+    
+    public Property[] filterByLocation(String location) {
+        List<Property> filtered = new ArrayList<>();
+        for (Property p : properties) {
+            if (p.location.equalsIgnoreCase(location)) {
+                filtered.add(p);
+            }
+        }
+        return filtered.toArray(new Property[0]);
+    }
+    
+    public void bookHostel(Scanner scanner) {
+        System.out.println("Enter your name: ");
+        String studentName = scanner.nextLine();
+        
+        System.out.println("Enter preferred location: ");
+        String location = scanner.nextLine();
+        
+        System.out.println("Enter duration of stay (months): ");
+        int months = scanner.nextInt();
+        
+        System.out.println("Enter your budget per month: ");
+        double budget = scanner.nextDouble();
+        scanner.nextLine();
+        
+        Property[] availableHostels = filterByLocation(location);
+        
+        System.out.println("Available Hostels in " + location + ":");
+        for (int i = 0; i < availableHostels.length; i++) {
+            if (availableHostels[i] instanceof Hostel) {
+                Hostel hostel = (Hostel) availableHostels[i];
+                double finalRent = hostel.calculateDiscount(months);
+                
+                if (finalRent <= budget) {
+                    System.out.println("[" + (i + 1) + "]");
+                    hostel.displayDetails(true);
+                    System.out.println("Discounted Rent: ₹" + finalRent + "/month");
+                }
+            }
+        }
+        
+        System.out.println("Enter the number of the hostel you want to book: ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (choice > 0 && choice <= availableHostels.length) {
+            Hostel bookedHostel = (Hostel) availableHostels[choice - 1];
+            System.out.println("Booking confirmed for " + studentName + " at " + bookedHostel.name);
+        } else {
+            System.out.println("Invalid choice. Booking failed.");
+        }
+    }
+}
+
+public class StudentHousingApp {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        HousingSystem system = new HousingSystem();
+
+        // Load hostels from file
+        system.loadPropertiesFromFile("housing_data.csv");
+        
+        // Allow the user to book a hostel
+        system.bookHostel(scanner);
+    }
+}
