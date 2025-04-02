@@ -2,7 +2,6 @@ Sample Code
 import java.io.*;
 import java.util.Scanner;
 
-// Main class to run the program
 public class StudentHousingSystem {
     public static void main(String[] args) {
         HousingManager manager = new HousingManager();
@@ -11,9 +10,7 @@ public class StudentHousingSystem {
     }
 }
 
-// Class to represent an accommodation
 class Accommodation {
-    // Instance variables
     private String name;
     private String type;
     private String location;
@@ -30,8 +27,6 @@ class Accommodation {
     private boolean kitchen;
     private String curfew;
     private String gender;
-
-    // Constructor
     public Accommodation(String name, String type, String location, int rent, boolean wifi, 
                         boolean meals, boolean security, double rating, int roomSharing, 
                         boolean laundry, boolean mess, boolean ac, boolean geyser, 
@@ -54,25 +49,55 @@ class Accommodation {
         this.gender = gender;
     }
 
-    // Getters for all properties
-    public String getName() { return name; }
-    public String getType() { return type; }
-    public String getLocation() { return location; }
-    public int getRent() { return rent; }
-    public boolean hasWifi() { return wifi; }
-    public boolean hasMeals() { return meals; }
-    public boolean hasSecurity() { return security; }
-    public double getRating() { return rating; }
-    public int getRoomSharing() { return roomSharing; }
-    public boolean hasLaundry() { return laundry; }
-    public boolean hasMess() { return mess; }
-    public boolean hasAC() { return ac; }
-    public boolean hasGeyser() { return geyser; }
-    public boolean hasKitchen() { return kitchen; }
-    public String getCurfew() { return curfew; }
-    public String getGender() { return gender; }
+    public String getName() { 
+    return name; 
+    }
+    public String getType() { 
+    return type;
+    }
+    public String getLocation() { 
+    return location; 
+    }
+    public int getRent() { 
+    return rent; 
+    }
+    public boolean hasWifi() { 
+    return wifi; 
+    }
+    public boolean hasMeals() { 
+    return meals; 
+    }
+    public boolean hasSecurity() { 
+    return security;
+    }
+    public double getRating() { 
+    return rating;
+    }
+    public int getRoomSharing() { 
+    return roomSharing;
+    }
+    public boolean hasLaundry() { 
+    return laundry;
+    }
+    public boolean hasMess() { 
+    return mess; 
+    }
+    public boolean hasAC() { 
+    return ac; 
+    }
+    public boolean hasGeyser() { 
+    return geyser; 
+    }
+    public boolean hasKitchen() { 
+    return kitchen;
+    }
+    public String getCurfew() { 
+    return curfew;
+    }
+    public String getGender() {     
+    return gender;
+    }
 
-    // Method to display accommodation details
     public void displayDetails() {
         System.out.println("\n--- Accommodation Details ---");
         System.out.println("Name: " + name);
@@ -95,7 +120,7 @@ class Accommodation {
     }
 }
 
-// Interface for authentication
+// Interface for authentication //why interface for authentication?
 interface Authenticable {
     boolean login(String username, String password);
     void register(String username, String password);
@@ -129,16 +154,14 @@ class HousingManager {
     private UserAuthenticator authenticator;
     private String currentUser;
 
-    // Constructor
     public HousingManager() {
-        accommodations = new Accommodation[100]; // Fixed size array (no collections)
+        accommodations = new Accommodation[100]; // Fixed size array (no collections) why?
         accommodationCount = 0;
         scanner = new Scanner(System.in);
         authenticator = new UserAuthenticator();
         currentUser = null;
     }
 
-    // Method to load accommodations from CSV file
     public void loadAccommodations(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
@@ -147,28 +170,28 @@ class HousingManager {
             while ((line = br.readLine()) != null && accommodationCount < accommodations.length) {
                 if (firstLine) {
                     firstLine = false;
-                    continue; // Skip header
+                    continue; // Skip header //can continue be used?
                 }
                 
-                String[] values = line.split(",");
+                String[] values = line.split(","); //.split .trim functionality difference from python
                 if (values.length >= 16) {
                     Accommodation acc = new Accommodation(
-                        values[0].trim(), // Name
-                        values[1].trim(), // Type
-                        values[2].trim(), // Location
-                        Integer.parseInt(values[3].trim()), // Rent
-                        values[4].trim().equals("Yes"), // WiFi
-                        values[5].trim().equals("Yes"), // Meals
-                        values[6].trim().equals("Yes"), // Security
-                        Double.parseDouble(values[7].trim()), // Rating
-                        Integer.parseInt(values[8].trim()), // RoomSharing
-                        values[9].trim().equals("Yes"), // Laundry
-                        values[10].trim().equals("Yes"), // Mess
-                        values[11].trim().equals("Yes"), // AC
-                        values[12].trim().equals("Yes"), // Geyser
-                        values[13].trim().equals("Yes"), // Kitchen
-                        values[14].trim(), // Curfew
-                        values[15].trim()  // Gender
+                        values[0].trim(),
+                        values[1].trim(),
+                        values[2].trim(), 
+                        Integer.parseInt(values[3].trim()),
+                        values[4].trim().equals("Yes"), 
+                        values[5].trim().equals("Yes"), 
+                        values[6].trim().equals("Yes"), 
+                        Double.parseDouble(values[7].trim()), 
+                        Integer.parseInt(values[8].trim()), 
+                        values[9].trim().equals("Yes"), 
+                        values[10].trim().equals("Yes"), 
+                        values[11].trim().equals("Yes"), 
+                        values[12].trim().equals("Yes"), 
+                        values[13].trim().equals("Yes"), 
+                        values[14].trim(), 
+                        values[15].trim() 
                     );
                     accommodations[accommodationCount++] = acc;
                 }
@@ -181,7 +204,6 @@ class HousingManager {
         }
     }
 
-    // Method to start the system
     public void startSystem() {
         System.out.println("\n=== Welcome to Student Housing Management System ===");
         System.out.println("1. Login");
@@ -190,7 +212,7 @@ class HousingManager {
         System.out.print("Enter your choice: ");
         
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         switch (choice) {
             case 1:
@@ -208,8 +230,6 @@ class HousingManager {
                 startSystem();
         }
     }
-
-    // Method to handle user login
     private void handleLogin() {
         System.out.print("\nEnter username: ");
         String username = scanner.nextLine();
@@ -226,7 +246,6 @@ class HousingManager {
         }
     }
 
-    // Method to handle user registration
     private void handleRegistration() {
         System.out.print("\nEnter a username: ");
         String username = scanner.nextLine();
@@ -237,7 +256,6 @@ class HousingManager {
         startSystem();
     }
 
-    // Method to show main menu after login
     private void showMainMenu() {
         System.out.println("\n=== Main Menu ===");
         System.out.println("1. Search Accommodations");
@@ -247,7 +265,7 @@ class HousingManager {
         System.out.print("Enter your choice: ");
         
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         switch (choice) {
             case 1:
@@ -269,8 +287,6 @@ class HousingManager {
                 showMainMenu();
         }
     }
-
-    // Method to search accommodations by type
     private void searchAccommodations() {
         System.out.println("\n=== Search Accommodations ===");
         System.out.println("1. PG (Paying Guest)");
@@ -281,7 +297,7 @@ class HousingManager {
         System.out.print("Enter your choice: ");
         
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         String type = "";
         switch (choice) {
@@ -325,8 +341,6 @@ class HousingManager {
         
         showMainMenu();
     }
-
-    // Method to view all accommodations
     private void viewAllAccommodations() {
         System.out.println("\n=== All Available Accommodations ===");
         for (int i = 0; i < accommodationCount; i++) {
@@ -340,11 +354,10 @@ class HousingManager {
         showMainMenu();
     }
 
-    // Method to view details of a specific accommodation
     private void viewAccommodationDetails() {
         System.out.print("\nEnter the number to view details (0 to go back): ");
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         if (choice == 0) {
             return;
@@ -362,7 +375,6 @@ class HousingManager {
         }
     }
 
-    // Method to book an accommodation
     private void bookAccommodation(int index) {
         System.out.println("\n=== Booking Process ===");
         System.out.println("You are booking: " + accommodations[index].getName());
@@ -384,7 +396,6 @@ class HousingManager {
         System.out.println("\nThank you for using our service!");
     }
 
-    // Method to filter accommodations
     private void filterAccommodations() {
         System.out.println("\n=== Filter Accommodations ===");
         System.out.println("Filter by:");
@@ -397,7 +408,7 @@ class HousingManager {
         System.out.print("Enter your choice: ");
         
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         switch (choice) {
             case 1:
@@ -424,7 +435,6 @@ class HousingManager {
         }
     }
 
-    // Filter by location
     private void filterByLocation() {
         System.out.println("\nAvailable Locations:");
         System.out.println("- Prem Nagar");
@@ -452,8 +462,6 @@ class HousingManager {
         
         showMainMenu();
     }
-
-    // Filter by rent range
     private void filterByRent() {
         System.out.print("\nEnter minimum rent: ");
         int min = scanner.nextInt();
@@ -482,7 +490,6 @@ class HousingManager {
         showMainMenu();
     }
 
-    // Filter by facilities
     private void filterByFacilities() {
         System.out.println("\nSelect facilities to filter by:");
         System.out.println("1. WiFi");
@@ -495,7 +502,7 @@ class HousingManager {
         System.out.print("Enter facility numbers (comma separated, e.g., 1,3,5): ");
         
         String[] choices = scanner.nextLine().split(",");
-        boolean[] selected = new boolean[7]; // For 7 facilities
+        boolean[] selected = new boolean[7]; 
         
         for (String choice : choices) {
             try {
@@ -504,7 +511,6 @@ class HousingManager {
                     selected[num-1] = true;
                 }
             } catch (NumberFormatException e) {
-                // Ignore invalid entries
             }
         }
         
@@ -540,11 +546,10 @@ class HousingManager {
         showMainMenu();
     }
 
-    // Filter by rating
     private void filterByRating() {
         System.out.print("\nEnter minimum rating (1-5): ");
         double minRating = scanner.nextDouble();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         System.out.println("\n=== Accommodations with rating " + minRating + "+ ===");
         boolean found = false;
@@ -566,8 +571,6 @@ class HousingManager {
         
         showMainMenu();
     }
-
-    // Filter by gender
     private void filterByGender() {
         System.out.println("\nSelect gender preference:");
         System.out.println("1. Male");
@@ -576,7 +579,7 @@ class HousingManager {
         System.out.print("Enter your choice: ");
         
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine(); 
         
         String gender = "";
         switch (choice) {
@@ -619,210 +622,3 @@ class HousingManager {
 
 
 
-
-
-/// another code 
-import java.io.*;
-import java.util.*;
-
-// Unit II: Class fundamentals, inheritance, interfaces
-interface Housing {
-    void displayDetails();
-    double calculateDiscount(int months);
-}
-
-// Abstract class demonstrating Unit II concepts
-abstract class Property implements Housing {
-    protected String name;
-    protected String type;
-    protected String location;
-    protected double rent;
-    protected boolean wifi;
-    protected boolean meals;
-    protected double rating;
-
-    // Constructor
-    public Property(String name, String type, String location, double rent, 
-                   boolean wifi, boolean meals, double rating) {
-        this.name = name;
-        this.type = type;
-        this.location = location;
-        this.rent = rent;
-        this.wifi = wifi;
-        this.meals = meals;
-        this.rating = rating;
-    }
-
-    // Method overloading (Unit II)
-    public void displayDetails() {
-        System.out.println("Property: " + name);
-    }
-
-    public void displayDetails(boolean showAll) {
-        if (showAll) {
-            System.out.println("Property: " + name);
-            System.out.println("Type: " + type);
-            System.out.println("Location: " + location);
-            System.out.println("Rent: ₹" + rent + "/month");
-            System.out.println("WiFi: " + (wifi ? "Yes" : "No"));
-            System.out.println("Meals: " + (meals ? "Yes" : "No"));
-            System.out.println("Rating: " + rating + "/5");
-        } else {
-            displayDetails();
-        }
-    }
-
-    // Abstract method
-    public abstract String getFacilities();
-}
-
-// Unit II: Inheritance
-class PG extends Property {
-    private int sharing;
-    private String curfew;
-
-    public PG(String name, String type, String location, double rent, 
-             boolean wifi, boolean meals, double rating, int sharing, String curfew) {
-        super(name, type, location, rent, wifi, meals, rating);
-        this.sharing = sharing;
-        this.curfew = curfew;
-    }
-
-    // Method overriding (Unit II)
-    @Override
-    public String getFacilities() {
-        return "Sharing: " + sharing + ", Curfew: " + curfew;
-    }
-
-    @Override
-    public double calculateDiscount(int months) {
-        if (months >= 6) {
-            return rent * 0.9; // 10% discount for 6+ months
-        }
-        return rent;
-    }
-}
-
-class Hostel extends Property {
-    private boolean laundry;
-    private boolean mess;
-
-    public Hostel(String name, String type, String location, double rent, 
-                 boolean wifi, boolean meals, double rating, boolean laundry, boolean mess) {
-        super(name, type, location, rent, wifi, meals, rating);
-        this.laundry = laundry;
-        this.mess = mess;
-    }
-
-    @Override
-    public String getFacilities() {
-        return "Laundry: " + (laundry ? "Yes" : "No") + ", Mess: " + (mess ? "Yes" : "No");
-    }
-
-    @Override
-    public double calculateDiscount(int months) {
-        if (months >= 12) {
-            return rent * 0.85; // 15% discount for yearly stay
-        }
-        return rent;
-    }
-}
-
-// Unit III: Nested class example
-class HousingSystem {
-    // Static nested class for configuration
-    static class Config {
-        static final String DATA_FILE = "housing_data.txt";
-        static final String[] LOCATIONS = {"Prem Nagar", "Bhidoli", "Kandoli"};
-    }
-
-    private List<Property> properties;
-
-    public HousingSystem() {
-        properties = new ArrayList<>();
-    }
-
-    // Unit I: Arrays and program control statements
-    public void loadProperties() {
-        try (BufferedReader br = new BufferedReader(new FileReader(Config.DATA_FILE))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split("\t");
-                // Process data and create property objects
-                // (Implementation would parse the data file columns)
-            }
-        } catch (IOException e) {
-            // Unit III: Exception handling
-            System.err.println("Error reading file: " + e.getMessage());
-        }
-    }
-
-    public void addProperty(Property property) {
-        properties.add(property);
-    }
-
-    public void displayAllProperties() {
-        for (Property p : properties) {
-            p.displayDetails(true);
-            System.out.println("Facilities: " + p.getFacilities());
-            System.out.println("-----------------------");
-        }
-    }
-
-    // Unit I: Strings and arrays
-    public Property[] filterByLocation(String location) {
-        List<Property> filtered = new ArrayList<>();
-        for (Property p : properties) {
-            if (p.location.equalsIgnoreCase(location)) {
-                filtered.add(p);
-            }
-        }
-        return filtered.toArray(new Property[0]);
-    }
-}
-
-public class StudentHousingApp {
-    public static void main(String[] args) {
-        // Unit I: Comment line arguments
-        if (args.length > 0) {
-            System.out.println("Command line arguments received:");
-            for (String arg : args) {
-                System.out.println(arg);
-            }
-        }
-
-        HousingSystem system = new HousingSystem();
-
-        // Add sample properties (would normally load from file)
-        system.addProperty(new PG("Maple Residency PG", "PG", "Prem Nagar", 12534, 
-                                false, true, 4.3, 3, "10:00 PM"));
-        system.addProperty(new Hostel("Sunrise Boys Hostel", "Hostel", "Prem Nagar", 
-                                    14816, false, true, 4.4, true, true));
-
-        // Display all properties
-        system.displayAllProperties();
-
-        // Filter by location
-        System.out.println("\nProperties in Prem Nagar:");
-        Property[] premNagarProps = system.filterByLocation("Prem Nagar");
-        for (Property p : premNagarProps) {
-            p.displayDetails();
-        }
-
-        // Unit I: Operators and variables
-        double budget = 10000;
-        System.out.println("\nProperties under ₹" + budget + ":");
-        for (Property p : system.filterByLocation("Prem Nagar")) {
-            if (p.rent <= budget) {
-                p.displayDetails(true);
-            }
-        }
-
-        // Unit III: Thread example
-        Thread dataLoader = new Thread(() -> {
-            System.out.println("\nLoading data in background...");
-            system.loadProperties();
-        });
-        dataLoader.start();
-    }
-}
