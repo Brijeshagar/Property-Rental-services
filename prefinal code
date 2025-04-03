@@ -9,10 +9,10 @@ public class StudentHousingSystem2{
     }
 }
 
-abstract class HousingEntity {
+abstract class HousingProperty {
     private final String name;
     
-    public HousingEntity(String name) {
+    public HousingProperty(String name) {
         this.name = name;
     }
     
@@ -20,10 +20,10 @@ abstract class HousingEntity {
         return name;
     }
     
-    public abstract void displayBasicInfo();
+    public abstract void displayBasicInformation();
 }
 
-class Accommodation extends HousingEntity {
+class Accommodation extends HousingProperty {
     private final String type;
     private final String location;
     private final int rent;
@@ -62,24 +62,53 @@ class Accommodation extends HousingEntity {
         this.gender = gender;
     }
 
-    public String getType() { return type; }
-    public String getLocation() { return location; }
-    public int getRent() { return rent; }
-    public boolean hasWifi() { return wifi; }
-    public boolean hasMeals() { return meals; }
-    public boolean hasSecurity() { return security; }
-    public double getRating() { return rating; }
-    public int getRoomSharing() { return roomSharing; }
-    public boolean hasLaundry() { return laundry; }
-    public boolean hasMess() { return mess; }
-    public boolean hasAC() { return ac; }
-    public boolean hasGeyser() { return geyser; }
-    public boolean hasKitchen() { return kitchen; }
-    public String getCurfew() { return curfew; }
-    public String getGender() { return gender; }
+    public String getType() { 
+    return type;
+    }
+    public String getLocation() {
+    return location; 
+    }
+    public int getRent() { r
+    eturn rent;
+    }
+    public boolean hasWifi() { 
+    return wifi; 
+    }
+    public boolean hasMeals() { 
+    return meals;
+    }
+    public boolean hasSecurity() { 
+    return security;
+    }
+    public double getRating() { 
+    return rating; 
+    }
+    public int getRoomSharing() { 
+    return roomSharing; 
+    }
+    public boolean hasLaundry() {
+    return laundry;
+    }
+    public boolean hasMess() { 
+    return mess;
+    }
+    public boolean hasAC() { 
+    return ac; 
+    }
+    public boolean hasGeyser() { 
+    return geyser;
+    }
+    public boolean hasKitchen() { 
+    return kitchen; 
+    }
+    public String getCurfew() { 
+    return curfew;
+    }
+    public String getGender() { 
+    return gender;
+    }
 
-    @Override
-    public void displayBasicInfo() {
+    public void displayBasicInformation() {
         System.out.println("\n--- " + type + " Accommodation ---");
         System.out.println("Name: " + super.getName());
         System.out.println("Location: " + location);
@@ -95,7 +124,7 @@ class Accommodation extends HousingEntity {
     }
 
     public void displayDetails() {
-        displayBasicInfo();
+        displayBasicInformation();
         System.out.println("\nFacilities:");
         System.out.println("- WiFi: " + (wifi ? "Yes" : "No"));
         System.out.println("- Meals: " + (meals ? "Yes" : "No"));
@@ -123,7 +152,6 @@ class Hostel extends Accommodation {
         this.sportsFacility = sportsFacility;
     }
 
-    @Override
     public void displayDetails() {
         super.displayDetails();
         System.out.println("Hostel-specific Facilities:");
@@ -147,7 +175,6 @@ class PG extends Accommodation {
         this.powerBackup = powerBackup;
     }
 
-    @Override
     public void displayDetails() {
         super.displayDetails();
         System.out.println("PG-specific Facilities:");
@@ -171,7 +198,6 @@ class Flat extends Accommodation {
         this.maintenanceIncluded = maintenanceIncluded;
     }
 
-    @Override
     public void displayDetails() {
         super.displayDetails();
         System.out.println("Flat-specific Facilities:");
@@ -180,36 +206,27 @@ class Flat extends Accommodation {
     }
 }
 
-interface Authenticable {
+interface Authentication {
     boolean login(String username, String password);
     void register(String username, String password);
 }
 
-class UserAuthenticator implements Authenticable {
+class UserAuthenticator implements Authentication {
     private String username;
     private String password;
     private static int registrationCount = 0;
     
-    @Override
     public boolean login(String username, String password) {
         return this.username != null && this.username.equals(username) && 
                this.password != null && this.password.equals(password);
     }
-    
-    @Override
+
     public void register(String username, String password) {
         this.username = username;
         this.password = password;
         registrationCount++;
         System.out.println("Registration successful! You can now login with your credentials.");
-        System.out.println("Total registrations: " + registrationCount);
     }
-    
-    public void register(String username, String password, boolean displayCount) {
-        register(username, password);
-        if (displayCount) {
-            System.out.println("This is registration #" + registrationCount);
-        }
     }
 }
 
