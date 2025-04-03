@@ -1,0 +1,745 @@
+import java.io.*;
+import java.util.Scanner;
+
+public class StudentHousingSystem2{
+    public static void main(String[] args) {
+        HousingManager manager = new HousingManager();
+        manager.loadAccommodations("oops_dataset2.csv");
+        manager.startSystem();
+    }
+}
+
+abstract class HousingEntity {
+    private final String name;
+    
+    public HousingEntity(String name) {
+        this.name = name;
+    }
+    
+    public final String getName() {
+        return name;
+    }
+    
+    public abstract void displayBasicInfo();
+}
+
+class Accommodation extends HousingEntity {
+    private final String type;
+    private final String location;
+    private final int rent;
+    private final boolean wifi;
+    private final boolean meals;
+    private final boolean security;
+    private final double rating;
+    private final int roomSharing;
+    private final boolean laundry;
+    private final boolean mess;
+    private final boolean ac;
+    private final boolean geyser;
+    private final boolean kitchen;
+    private final String curfew;
+    private final String gender;
+
+    public Accommodation(String name, String type, String location, int rent, boolean wifi, 
+                        boolean meals, boolean security, double rating, int roomSharing, 
+                        boolean laundry, boolean mess, boolean ac, boolean geyser, 
+                        boolean kitchen, String curfew, String gender) {
+        super(name);
+        this.type = type;
+        this.location = location;
+        this.rent = rent;
+        this.wifi = wifi;
+        this.meals = meals;
+        this.security = security;
+        this.rating = rating;
+        this.roomSharing = roomSharing;
+        this.laundry = laundry;
+        this.mess = mess;
+        this.ac = ac;
+        this.geyser = geyser;
+        this.kitchen = kitchen;
+        this.curfew = curfew;
+        this.gender = gender;
+    }
+
+    public String getType() { return type; }
+    public String getLocation() { return location; }
+    public int getRent() { return rent; }
+    public boolean hasWifi() { return wifi; }
+    public boolean hasMeals() { return meals; }
+    public boolean hasSecurity() { return security; }
+    public double getRating() { return rating; }
+    public int getRoomSharing() { return roomSharing; }
+    public boolean hasLaundry() { return laundry; }
+    public boolean hasMess() { return mess; }
+    public boolean hasAC() { return ac; }
+    public boolean hasGeyser() { return geyser; }
+    public boolean hasKitchen() { return kitchen; }
+    public String getCurfew() { return curfew; }
+    public String getGender() { return gender; }
+
+    @Override
+    public void displayBasicInfo() {
+        System.out.println("\n--- " + type + " Accommodation ---");
+        System.out.println("Name: " + super.getName());
+        System.out.println("Location: " + location);
+        System.out.println("Rent: ₹" + rent);
+        System.out.println("Rating: " + rating + "/5");
+        System.out.println("Gender: " + gender);
+        if (!type.equalsIgnoreCase("Flat")) {
+            System.out.println("Room Sharing: " + roomSharing + " sharing");
+            System.out.println("Curfew: " + (curfew.equals("None") ? "No curfew" : curfew));
+        } else {
+            System.out.println("Private apartment");
+        }
+    }
+
+    public void displayDetails() {
+        displayBasicInfo();
+        System.out.println("\nFacilities:");
+        System.out.println("- WiFi: " + (wifi ? "Yes" : "No"));
+        System.out.println("- Meals: " + (meals ? "Yes" : "No"));
+        System.out.println("- Security: " + (security ? "Yes" : "No"));
+        System.out.println("- Laundry: " + (laundry ? "Yes" : "No"));
+        System.out.println("- Mess: " + (mess ? "Yes" : "No"));
+        System.out.println("- AC: " + (ac ? "Yes" : "No"));
+        System.out.println("- Geyser: " + (geyser ? "Yes" : "No"));
+        System.out.println("- Kitchen: " + (kitchen ? "Yes" : "No"));
+    }
+}
+
+class Hostel extends Accommodation {
+    private final boolean studyRoom;
+    private final boolean sportsFacility;
+
+    public Hostel(String name, String location, int rent, boolean wifi, 
+                 boolean meals, boolean security, double rating, int roomSharing, 
+                 boolean laundry, boolean mess, boolean ac, boolean geyser, 
+                 boolean kitchen, String curfew, String gender,
+                 boolean studyRoom, boolean sportsFacility) {
+        super(name, "Hostel", location, rent, wifi, meals, security, rating, 
+              roomSharing, laundry, mess, ac, geyser, kitchen, curfew, gender);
+        this.studyRoom = studyRoom;
+        this.sportsFacility = sportsFacility;
+    }
+
+    @Override
+    public void displayDetails() {
+        super.displayDetails();
+        System.out.println("Hostel-specific Facilities:");
+        System.out.println("- Study Room: " + (studyRoom ? "Yes" : "No"));
+        System.out.println("- Sports Facility: " + (sportsFacility ? "Yes" : "No"));
+    }
+}
+
+class PG extends Accommodation {
+    private final boolean parking;
+    private final boolean powerBackup;
+
+    public PG(String name, String location, int rent, boolean wifi, 
+             boolean meals, boolean security, double rating, int roomSharing, 
+             boolean laundry, boolean mess, boolean ac, boolean geyser, 
+             boolean kitchen, String curfew, String gender,
+             boolean parking, boolean powerBackup) {
+        super(name, "PG", location, rent, wifi, meals, security, rating, 
+              roomSharing, laundry, mess, ac, geyser, kitchen, curfew, gender);
+        this.parking = parking;
+        this.powerBackup = powerBackup;
+    }
+
+    @Override
+    public void displayDetails() {
+        super.displayDetails();
+        System.out.println("PG-specific Facilities:");
+        System.out.println("- Parking: " + (parking ? "Yes" : "No"));
+        System.out.println("- Power Backup: " + (powerBackup ? "Yes" : "No"));
+    }
+}
+
+class Flat extends Accommodation {
+    private final boolean furnished;
+    private final boolean maintenanceIncluded;
+
+    public Flat(String name, String location, int rent, boolean wifi, 
+               boolean meals, boolean security, double rating, 
+               boolean laundry, boolean mess, boolean ac, boolean geyser, 
+               boolean kitchen, String gender,
+               boolean furnished, boolean maintenanceIncluded) {
+        super(name, "Flat", location, rent, wifi, meals, security, rating, 
+              1, laundry, mess, ac, geyser, kitchen, "None", gender);
+        this.furnished = furnished;
+        this.maintenanceIncluded = maintenanceIncluded;
+    }
+
+    @Override
+    public void displayDetails() {
+        super.displayDetails();
+        System.out.println("Flat-specific Facilities:");
+        System.out.println("- Furnished: " + (furnished ? "Yes" : "No"));
+        System.out.println("- Maintenance Included: " + (maintenanceIncluded ? "Yes" : "No"));
+    }
+}
+
+interface Authenticable {
+    boolean login(String username, String password);
+    void register(String username, String password);
+}
+
+class UserAuthenticator implements Authenticable {
+    private String username;
+    private String password;
+    private static int registrationCount = 0;
+    
+    @Override
+    public boolean login(String username, String password) {
+        return this.username != null && this.username.equals(username) && 
+               this.password != null && this.password.equals(password);
+    }
+    
+    @Override
+    public void register(String username, String password) {
+        this.username = username;
+        this.password = password;
+        registrationCount++;
+        System.out.println("Registration successful! You can now login with your credentials.");
+        System.out.println("Total registrations: " + registrationCount);
+    }
+    
+    public void register(String username, String password, boolean displayCount) {
+        register(username, password);
+        if (displayCount) {
+            System.out.println("This is registration #" + registrationCount);
+        }
+    }
+}
+
+class HousingManager {
+    private Accommodation[] accommodations;
+    private int accommodationCount;
+    private final Scanner scanner;
+    private final UserAuthenticator authenticator;
+    private String currentUser;
+
+    public HousingManager() {
+        accommodations = new Accommodation[100];
+        accommodationCount = 0;
+        scanner = new Scanner(System.in);
+        authenticator = new UserAuthenticator();
+        currentUser = null;
+    }
+
+    public void loadAccommodations(String filename) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            boolean firstLine = true;
+            
+            while ((line = br.readLine()) != null && accommodationCount < accommodations.length) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                
+                String[] values = line.split(",");
+                if (values.length >= 16) {
+                    String type = values[1].trim();
+                    Accommodation acc;
+                    
+                    if (type.equalsIgnoreCase("Hostel")) {
+                        acc = new Hostel(
+                            values[0].trim(), values[2].trim(), 
+                            Integer.parseInt(values[3].trim()),
+                            values[4].trim().equals("Yes"), 
+                            values[5].trim().equals("Yes"), 
+                            values[6].trim().equals("Yes"), 
+                            Double.parseDouble(values[7].trim()), 
+                            Integer.parseInt(values[8].trim()), 
+                            values[9].trim().equals("Yes"), 
+                            values[10].trim().equals("Yes"), 
+                            values[11].trim().equals("Yes"), 
+                            values[12].trim().equals("Yes"), 
+                            values[13].trim().equals("Yes"), 
+                            values[14].trim(), values[15].trim(),
+                            false, false
+                        );
+                    } else if (type.equalsIgnoreCase("PG")) {
+                        acc = new PG(
+                            values[0].trim(), values[2].trim(), 
+                            Integer.parseInt(values[3].trim()),
+                            values[4].trim().equals("Yes"), 
+                            values[5].trim().equals("Yes"), 
+                            values[6].trim().equals("Yes"), 
+                            Double.parseDouble(values[7].trim()), 
+                            Integer.parseInt(values[8].trim()), 
+                            values[9].trim().equals("Yes"), 
+                            values[10].trim().equals("Yes"), 
+                            values[11].trim().equals("Yes"), 
+                            values[12].trim().equals("Yes"), 
+                            values[13].trim().equals("Yes"), 
+                            values[14].trim(), values[15].trim(),
+                            false, false
+                        );
+                    } else if (type.equalsIgnoreCase("Flat")) {
+                        acc = new Flat(
+                            values[0].trim(), values[2].trim(), 
+                            Integer.parseInt(values[3].trim()),
+                            values[4].trim().equals("Yes"), 
+                            values[5].trim().equals("Yes"), 
+                            values[6].trim().equals("Yes"), 
+                            Double.parseDouble(values[7].trim()), 
+                            values[9].trim().equals("Yes"), 
+                            values[10].trim().equals("Yes"), 
+                            values[11].trim().equals("Yes"), 
+                            values[12].trim().equals("Yes"), 
+                            values[13].trim().equals("Yes"), 
+                            values[15].trim(),
+                            false, false
+                        );
+                    } else {
+                        acc = new Accommodation(
+                            values[0].trim(), type, values[2].trim(), 
+                            Integer.parseInt(values[3].trim()),
+                            values[4].trim().equals("Yes"), 
+                            values[5].trim().equals("Yes"), 
+                            values[6].trim().equals("Yes"), 
+                            Double.parseDouble(values[7].trim()), 
+                            Integer.parseInt(values[8].trim()), 
+                            values[9].trim().equals("Yes"), 
+                            values[10].trim().equals("Yes"), 
+                            values[11].trim().equals("Yes"), 
+                            values[12].trim().equals("Yes"), 
+                            values[13].trim().equals("Yes"), 
+                            values[14].trim(), values[15].trim()
+                        );
+                    }
+                    
+                    accommodations[accommodationCount++] = acc;
+                }
+            }
+            System.out.println("Loaded " + accommodationCount + " accommodations from file.");
+        } catch (IOException e) {
+            System.out.println("Error loading accommodations: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Error parsing data: " + e.getMessage());
+        }
+    }
+
+    public void startSystem() {
+        System.out.println("\n=== Welcome to Student Housing Management System ===");
+        System.out.println("1. Login");
+        System.out.println("2. Register");
+        System.out.println("3. Exit");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        switch (choice) {
+            case 1:
+                handleLogin();
+                break;
+            case 2:
+                handleRegistration();
+                break;
+            case 3:
+                System.out.println("Thank you for using the system. Goodbye!");
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+                startSystem();
+        }
+    }
+
+    private void handleLogin() {
+        System.out.print("\nEnter username: ");
+        String username = scanner.nextLine();
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine();
+        
+        if (authenticator.login(username, password)) {
+            currentUser = username;
+            System.out.println("\nLogin successful! Welcome, " + username + "!");
+            showMainMenu();
+        } else {
+            System.out.println("Invalid username or password. Please try again.");
+            startSystem();
+        }
+    }
+
+    private void handleRegistration() {
+        System.out.print("\nEnter a username: ");
+        String username = scanner.nextLine();
+        System.out.print("Enter a password: ");
+        String password = scanner.nextLine();
+        
+        authenticator.register(username, password, true);
+        startSystem();
+    }
+
+    private void showMainMenu() {
+        System.out.println("\n=== Main Menu ===");
+        System.out.println("1. Search Accommodations");
+        System.out.println("2. View All Accommodations");
+        System.out.println("3. Filter Accommodations");
+        System.out.println("4. Logout");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        switch (choice) {
+            case 1:
+                searchAccommodations();
+                break;
+            case 2:
+                viewAllAccommodations();
+                break;
+            case 3:
+                filterAccommodations();
+                break;
+            case 4:
+                currentUser = null;
+                System.out.println("Logged out successfully.");
+                startSystem();
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+                showMainMenu();
+        }
+    }
+
+    private void searchAccommodations() {
+        System.out.println("\n=== Search Accommodations ===");
+        System.out.println("1. PG (Paying Guest)");
+        System.out.println("2. Hostel");
+        System.out.println("3. Flat");
+        System.out.println("4. View All Types");
+        System.out.println("5. Back to Main Menu");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        String type = "";
+        switch (choice) {
+            case 1:
+                type = "PG";
+                break;
+            case 2:
+                type = "Hostel";
+                break;
+            case 3:
+                type = "Flat";
+                break;
+            case 4:
+                viewAllAccommodations();
+                return;
+            case 5:
+                showMainMenu();
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+                searchAccommodations();
+                return;
+        }
+        
+        System.out.println("\n=== Available " + type + " Accommodations ===");
+        boolean found = false;
+        for (int i = 0; i < accommodationCount; i++) {
+            if (accommodations[i].getType().equalsIgnoreCase(type)) {
+                System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                                 " - " + accommodations[i].getLocation() + 
+                                 " (₹" + accommodations[i].getRent() + ")");
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No " + type + " accommodations found.");
+        } else {
+            viewAccommodationDetails();
+        }
+        
+        showMainMenu();
+    }
+
+    private void viewAllAccommodations() {
+        System.out.println("\n=== All Available Accommodations ===");
+        for (int i = 0; i < accommodationCount; i++) {
+            System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                             " (" + accommodations[i].getType() + ") - " + 
+                             accommodations[i].getLocation() + 
+                             " (₹" + accommodations[i].getRent() + ")");
+        }
+        
+        viewAccommodationDetails();
+        showMainMenu();
+    }
+
+    private void viewAccommodationDetails() {
+        System.out.print("\nEnter the number to view details (0 to go back): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        if (choice == 0) {
+            return;
+        } else if (choice > 0 && choice <= accommodationCount) {
+            accommodations[choice-1].displayDetails();
+            System.out.print("\nWould you like to book this accommodation? (yes/no): ");
+            String bookChoice = scanner.nextLine();
+            
+            if (bookChoice.equalsIgnoreCase("yes")) {
+                bookAccommodation(choice-1);
+            }
+        } else {
+            System.out.println("Invalid choice. Please try again.");
+            viewAccommodationDetails();
+        }
+    }
+
+    private void bookAccommodation(int index) {
+        System.out.println("\n=== Booking Process ===");
+        System.out.println("You are booking: " + accommodations[index].getName());
+        System.out.println("Rent: ₹" + accommodations[index].getRent());
+        
+        System.out.print("Enter your full name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter your contact number: ");
+        String contact = scanner.nextLine();
+        System.out.print("Enter your university: ");
+        String university = scanner.nextLine();
+        
+        System.out.println("\nBooking confirmed for " + name + "!");
+        System.out.println("Contact: " + contact);
+        System.out.println("Accommodation: " + accommodations[index].getName());
+        System.out.println("Please contact the owner to complete the process.");
+        
+        System.out.println("\nThank you for using our service!");
+    }
+
+    private void filterAccommodations() {
+        System.out.println("\n=== Filter Accommodations ===");
+        System.out.println("Filter by:");
+        System.out.println("1. Location");
+        System.out.println("2. Rent Range");
+        System.out.println("3. Facilities");
+        System.out.println("4. Rating");
+        System.out.println("5. Gender Preference");
+        System.out.println("6. Back to Main Menu");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        switch (choice) {
+            case 1:
+                filterByLocation();
+                break;
+            case 2:
+                filterByRent();
+                break;
+            case 3:
+                filterByFacilities();
+                break;
+            case 4:
+                filterByRating();
+                break;
+            case 5:
+                filterByGender();
+                break;
+            case 6:
+                showMainMenu();
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+                filterAccommodations();
+        }
+    }
+
+    private void filterByLocation() {
+        System.out.println("\nAvailable Locations:");
+        System.out.println("- Prem Nagar");
+        System.out.println("- Bhidoli");
+        System.out.println("- Kandoli");
+        System.out.print("Enter location to filter: ");
+        String location = scanner.nextLine();
+        
+        System.out.println("\n=== Accommodations in " + location + " ===");
+        boolean found = false;
+        for (int i = 0; i < accommodationCount; i++) {
+            if (accommodations[i].getLocation().equalsIgnoreCase(location)) {
+                System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                                 " (" + accommodations[i].getType() + ") - " + 
+                                 "₹" + accommodations[i].getRent());
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No accommodations found in " + location);
+        } else {
+            viewAccommodationDetails();
+        }
+        
+        showMainMenu();
+    }
+
+    private void filterByRent() {
+        System.out.print("\nEnter minimum rent: ");
+        int min = scanner.nextInt();
+        System.out.print("Enter maximum rent: ");
+        int max = scanner.nextInt();
+        scanner.nextLine();
+        
+        System.out.println("\n=== Accommodations between ₹" + min + " and ₹" + max + " ===");
+        boolean found = false;
+        for (int i = 0; i < accommodationCount; i++) {
+            if (accommodations[i].getRent() >= min && accommodations[i].getRent() <= max) {
+                System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                                 " (" + accommodations[i].getType() + ") - " + 
+                                 accommodations[i].getLocation() + 
+                                 " (₹" + accommodations[i].getRent() + ")");
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No accommodations found in this rent range.");
+        } else {
+            viewAccommodationDetails();
+        }
+        
+        showMainMenu();
+    }
+
+    private void filterByFacilities() {
+        System.out.println("\nSelect facilities to filter by:");
+        System.out.println("1. WiFi");
+        System.out.println("2. Meals");
+        System.out.println("3. Security");
+        System.out.println("4. Laundry");
+        System.out.println("5. AC");
+        System.out.println("6. Geyser");
+        System.out.println("7. Kitchen");
+        System.out.print("Enter facility numbers (comma separated, e.g., 1,3,5): ");
+        
+        String[] choices = scanner.nextLine().split(",");
+        boolean[] selected = new boolean[7]; 
+        
+        for (String choice : choices) {
+            try {
+                int num = Integer.parseInt(choice.trim());
+                if (num >= 1 && num <= 7) {
+                    selected[num-1] = true;
+                }
+            } catch (NumberFormatException e) {
+                // Ignore invalid entries
+            }
+        }
+        
+        System.out.println("\n=== Accommodations with selected facilities ===");
+        boolean found = false;
+        
+        for (int i = 0; i < accommodationCount; i++) {
+            boolean matches = true;
+            
+            if (selected[0] && !accommodations[i].hasWifi()) matches = false;
+            if (selected[1] && !accommodations[i].hasMeals()) matches = false;
+            if (selected[2] && !accommodations[i].hasSecurity()) matches = false;
+            if (selected[3] && !accommodations[i].hasLaundry()) matches = false;
+            if (selected[4] && !accommodations[i].hasAC()) matches = false;
+            if (selected[5] && !accommodations[i].hasGeyser()) matches = false;
+            if (selected[6] && !accommodations[i].hasKitchen()) matches = false;
+            
+            if (matches) {
+                System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                                 " (" + accommodations[i].getType() + ") - " + 
+                                 accommodations[i].getLocation() + 
+                                 " (₹" + accommodations[i].getRent() + ")");
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No accommodations found with all selected facilities.");
+        } else {
+            viewAccommodationDetails();
+        }
+        
+        showMainMenu();
+    }
+
+    private void filterByRating() {
+        System.out.print("\nEnter minimum rating (1-5): ");
+        double minRating = scanner.nextDouble();
+        scanner.nextLine(); 
+        
+        System.out.println("\n=== Accommodations with rating " + minRating + "+ ===");
+        boolean found = false;
+        for (int i = 0; i < accommodationCount; i++) {
+            if (accommodations[i].getRating() >= minRating) {
+                System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                                 " (" + accommodations[i].getType() + ") - " + 
+                                 accommodations[i].getLocation() + 
+                                 " (Rating: " + accommodations[i].getRating() + ")");
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No accommodations found with this minimum rating.");
+        } else {
+            viewAccommodationDetails();
+        }
+        
+        showMainMenu();
+    }
+
+    private void filterByGender() {
+        System.out.println("\nSelect gender preference:");
+        System.out.println("1. Male");
+        System.out.println("2. Female");
+        System.out.println("3. Unisex");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        String gender = "";
+        switch (choice) {
+            case 1:
+                gender = "Male";
+                break;
+            case 2:
+                gender = "Female";
+                break;
+            case 3:
+                gender = "Unisex";
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+                filterByGender();
+                return;
+        }
+        
+        System.out.println("\n=== " + gender + " Accommodations ===");
+        boolean found = false;
+        for (int i = 0; i < accommodationCount; i++) {
+            if (accommodations[i].getGender().equalsIgnoreCase(gender)) {
+                System.out.println((i+1) + ". " + accommodations[i].getName() + 
+                                 " (" + accommodations[i].getType() + ") - " + 
+                                 accommodations[i].getLocation() + 
+                                 " (₹" + accommodations[i].getRent() + ")");
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No " + gender + " accommodations found.");
+        } else {
+            viewAccommodationDetails();
+        }
+        
+        showMainMenu();
+    }
+}
