@@ -68,8 +68,8 @@ class Accommodation extends HousingProperty {
     public String getLocation() {
     return location; 
     }
-    public int getRent() { r
-    eturn rent;
+    public int getRent() { 
+    return rent;
     }
     public boolean hasWifi() { 
     return wifi; 
@@ -112,7 +112,7 @@ class Accommodation extends HousingProperty {
         System.out.println("\n--- " + type + " Accommodation ---");
         System.out.println("Name: " + super.getName());
         System.out.println("Location: " + location);
-        System.out.println("Rent: ₹" + rent);
+        System.out.println("Rent: Rs" + rent);
         System.out.println("Rating: " + rating + "/5");
         System.out.println("Gender: " + gender);
         if (!type.equalsIgnoreCase("Flat")) {
@@ -466,7 +466,7 @@ class HousingManager {
             if (accommodations[i].getType().equalsIgnoreCase(type)) {
                 System.out.println((i+1) + ". " + accommodations[i].getName() + 
                                  " - " + accommodations[i].getLocation() + 
-                                 " (₹" + accommodations[i].getRent() + ")");
+                                 " (Rs" + accommodations[i].getRent() + ")");
                 found = true;
             }
         }
@@ -486,7 +486,7 @@ class HousingManager {
             System.out.println((i+1) + ". " + accommodations[i].getName() + 
                              " (" + accommodations[i].getType() + ") - " + 
                              accommodations[i].getLocation() + 
-                             " (₹" + accommodations[i].getRent() + ")");
+                             " (Rs" + accommodations[i].getRent() + ")");
         }
         
         viewAccommodationDetails();
@@ -517,7 +517,7 @@ class HousingManager {
     private void bookAccommodation(int index) {
         System.out.println("\n=== Booking Process ===");
         System.out.println("You are booking: " + accommodations[index].getName());
-        System.out.println("Rent: ₹" + accommodations[index].getRent());
+        System.out.println("Rent: Rs" + accommodations[index].getRent());
         
         System.out.print("Enter your full name: ");
         String name = scanner.nextLine();
@@ -587,7 +587,7 @@ class HousingManager {
             if (accommodations[i].getLocation().equalsIgnoreCase(location)) {
                 System.out.println((i+1) + ". " + accommodations[i].getName() + 
                                  " (" + accommodations[i].getType() + ") - " + 
-                                 "₹" + accommodations[i].getRent());
+                                 "Rs" + accommodations[i].getRent());
                 found = true;
             }
         }
@@ -608,14 +608,14 @@ class HousingManager {
         int max = scanner.nextInt();
         scanner.nextLine();
         
-        System.out.println("\n=== Accommodations between ₹" + min + " and ₹" + max + " ===");
+        System.out.println("\n=== Accommodations between Rs" + min + " and Rs" + max + " ===");
         boolean found = false;
         for (int i = 0; i < accommodationCount; i++) {
             if (accommodations[i].getRent() >= min && accommodations[i].getRent() <= max) {
                 System.out.println((i+1) + ". " + accommodations[i].getName() + 
                                  " (" + accommodations[i].getType() + ") - " + 
                                  accommodations[i].getLocation() + 
-                                 " (₹" + accommodations[i].getRent() + ")");
+                                 " (Rs" + accommodations[i].getRent() + ")");
                 found = true;
             }
         }
@@ -672,7 +672,7 @@ class HousingManager {
                 System.out.println((i+1) + ". " + accommodations[i].getName() + 
                                  " (" + accommodations[i].getType() + ") - " + 
                                  accommodations[i].getLocation() + 
-                                 " (₹" + accommodations[i].getRent() + ")");
+                                 " (Rs" + accommodations[i].getRent() + ")");
                 found = true;
             }
         }
@@ -746,7 +746,7 @@ class HousingManager {
                 System.out.println((i+1) + ". " + accommodations[i].getName() + 
                                  " (" + accommodations[i].getType() + ") - " + 
                                  accommodations[i].getLocation() + 
-                                 " (₹" + accommodations[i].getRent() + ")");
+                                 " (Rs" + accommodations[i].getRent() + ")");
                 found = true;
             }
         }
