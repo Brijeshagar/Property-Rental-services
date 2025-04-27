@@ -1380,47 +1380,6 @@ class HousingManager {
         }
     }
 
-    private void deleteUser(String username) {
-        int confirm = JOptionPane.showConfirmDialog(
-            adminFrame,
-            "Are you sure you want to delete user: " + username + "?",
-            "Confirm User Deletion",
-            JOptionPane.YES_NO_OPTION);
-        
-        if (confirm != JOptionPane.YES_OPTION) return;
-        
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                 "DELETE FROM users WHERE username = ?")) {
-            
-            stmt.setString(1, username);
-            int rowsAffected = stmt.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                try {
-                    DatabaseManager.logActivity(currentUser, "USER_DELETED", 
-                        "Deleted user " + username);
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-                JOptionPane.showMessageDialog(adminFrame, "User deleted successfully!");
-            } else {
-                JOptionPane.showMessageDialog(adminFrame, "Failed to delete user.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(adminFrame, "Error deleting user: " + e.getMessage());
-        }
-    }
-
-    // [Rest of the methods remain the same as in the previous version]
-    // This includes all the accommodation management methods like:
-    // searchAccommodations(), viewAllAccommodations(), filterAccommodations()
-    // addNewAccommodation(), updateAccommodation(), deleteAccommodation()
-    // confirmBooking(), viewAllBookings(), etc.
-    // These methods remain unchanged from the previous version
-
-
     private void searchAccommodations() {
         JFrame searchFrame = new JFrame("Search Accommodations");
         searchFrame.setSize(400, 300);
