@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.sql.*;
 
-public class StudentHousingSystemSwing {
+public class StudentHousingSystemSwing1 {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             HousingManager manager = new HousingManager();
@@ -100,6 +100,19 @@ class Accommodation extends HousingProperty {
             System.out.println("Private apartment");
         }
     }
+
+    public void displayDetails() {
+        displayBasicInformation();
+        System.out.println("\nFacilities:");
+        System.out.println("- WiFi: " + (wifi ? "Yes" : "No"));
+        System.out.println("- Meals: " + (meals ? "Yes" : "No"));
+        System.out.println("- Security: " + (security ? "Yes" : "No"));
+        System.out.println("- Laundry: " + (laundry ? "Yes" : "No"));
+        System.out.println("- Mess: " + (mess ? "Yes" : "No"));
+        System.out.println("- AC: " + (ac ? "Yes" : "No"));
+        System.out.println("- Geyser: " + (geyser ? "Yes" : "No"));
+        System.out.println("- Kitchen: " + (kitchen ? "Yes" : "No"));
+    }
 }
 
 class Hostel extends Accommodation {
@@ -115,6 +128,13 @@ class Hostel extends Accommodation {
               roomSharing, laundry, mess, ac, geyser, kitchen, curfew, gender);
         this.studyRoom = studyRoom;
         this.sportsFacility = sportsFacility;
+    }
+
+    public void displayDetails() {
+        super.displayDetails();
+        System.out.println("Hostel-specific Facilities:");
+        System.out.println("- Study Room: " + (studyRoom ? "Yes" : "No"));
+        System.out.println("- Sports Facility: " + (sportsFacility ? "Yes" : "No"));
     }
     
     public Boolean hasStudyRoom() { return studyRoom; }
@@ -135,6 +155,13 @@ class PG extends Accommodation {
         this.parking = parking;
         this.powerBackup = powerBackup;
     }
+
+    public void displayDetails() {
+        super.displayDetails();
+        System.out.println("PG-specific Facilities:");
+        System.out.println("- Parking: " + (parking ? "Yes" : "No"));
+        System.out.println("- Power Backup: " + (powerBackup ? "Yes" : "No"));
+    }
     
     public Boolean hasParking() { return parking; }
     public Boolean hasPowerBackup() { return powerBackup; }
@@ -154,9 +181,22 @@ class Flat extends Accommodation {
         this.furnished = furnished;
         this.maintenanceIncluded = maintenanceIncluded;
     }
+
+    public void displayDetails() {
+        super.displayDetails();
+        System.out.println("Flat-specific Facilities:");
+        System.out.println("- Furnished: " + (furnished ? "Yes" : "No"));
+        System.out.println("- Maintenance Included: " + (maintenanceIncluded ? "Yes" : "No"));
+    }
     
     public Boolean isFurnished() { return furnished; }
     public Boolean isMaintenanceIncluded() { return maintenanceIncluded; }
+}
+
+interface Authentication {
+    Boolean login(String username, String password);
+    void register(String username, String password);
+    Boolean isAdmin();
 }
 
 class DatabaseManager {
@@ -182,15 +222,18 @@ class DatabaseManager {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             
+            // Create users table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "username VARCHAR(50) UNIQUE NOT NULL, " +
                               "password VARCHAR(50) NOT NULL, " +
                               "is_admin BOOLEAN DEFAULT FALSE)");
             
+            // Create admin user if not exists
             stmt.executeUpdate("INSERT IGNORE INTO users (username, password, is_admin) VALUES " +
                               "('admin', 'admin123', TRUE)");
             
+            // Create accommodations table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS accommodations (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "name VARCHAR(100) NOT NULL, " +
@@ -216,6 +259,7 @@ class DatabaseManager {
                               "furnished BOOLEAN, " +
                               "maintenance_included BOOLEAN)");
             
+            // Create bookings table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bookings (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "customer_name VARCHAR(100) NOT NULL, " +
@@ -225,6 +269,23 @@ class DatabaseManager {
                               "confirmed BOOLEAN DEFAULT FALSE, " +
                               "FOREIGN KEY (accommodation_id) REFERENCES accommodations(id))");
             
+            // Create password reset requests table
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS password_reset_requests (" +
+                              "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                              "username VARCHAR(50) NOT NULL, " +
+                              "token VARCHAR(100) NOT NULL, " +
+                              "expiry DATETIME NOT NULL, " +
+                              "FOREIGN KEY (username) REFERENCES users(username))");
+            
+            // Create user activity log table
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS user_activity_log (" +
+                              "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                              "username VARCHAR(50) NOT NULL, " +
+                              "activity_type VARCHAR(50) NOT NULL, " +
+                              "activity_details TEXT, " +
+                              "activity_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                              "FOREIGN KEY (username) REFERENCES users(username))");
+            
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Database initialization failed: " + e.getMessage(), 
@@ -232,9 +293,54 @@ class DatabaseManager {
             System.exit(1);
         }
     }
+    
+    public static void addPasswordResetRequest(String username, String token) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "INSERT INTO password_reset_requests (username, token, expiry) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))")) {
+            
+            stmt.setString(1, username);
+            stmt.setString(2, token);
+            stmt.executeUpdate();
+        }
+    }
+    
+    public static boolean validatePasswordResetToken(String username, String token) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT * FROM password_reset_requests WHERE username = ? AND token = ? AND expiry > NOW()")) {
+            
+            stmt.setString(1, username);
+            stmt.setString(2, token);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        }
+    }
+    
+    public static void deletePasswordResetToken(String username) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "DELETE FROM password_reset_requests WHERE username = ?")) {
+            
+            stmt.setString(1, username);
+            stmt.executeUpdate();
+        }
+    }
+    
+    public static void logActivity(String username, String activityType, String details) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "INSERT INTO user_activity_log (username, activity_type, activity_details) VALUES (?, ?, ?)")) {
+            
+            stmt.setString(1, username);
+            stmt.setString(2, activityType);
+            stmt.setString(3, details);
+            stmt.executeUpdate();
+        }
+    }
 }
 
-class UserAuthenticator {
+class UserAuthenticator implements Authentication {
     private String username;
     private Boolean isAdmin = false;
     
@@ -250,6 +356,7 @@ class UserAuthenticator {
             if (rs.next()) {
                 this.username = username;
                 this.isAdmin = rs.getBoolean("is_admin");
+                DatabaseManager.logActivity(username, "LOGIN", "User logged in");
                 return true;
             }
         } catch (SQLException e) {
@@ -268,6 +375,7 @@ class UserAuthenticator {
             stmt.executeUpdate();
             
             this.username = username;
+            DatabaseManager.logActivity(username, "REGISTER", "New user registered");
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Registration failed: " + e.getMessage());
@@ -276,6 +384,18 @@ class UserAuthenticator {
 
     public Boolean isAdmin() {
         return isAdmin;
+    }
+}
+
+class AdminAuthenticator extends UserAuthenticator {
+    @Override
+    public Boolean login(String username, String password) {
+        Boolean result = super.login(username, password);
+        if (result && isAdmin()) {
+            DatabaseManager.logActivity(username, "ADMIN_LOGIN", "Admin logged in");
+            return true;
+        }
+        return false;
     }
 }
 
@@ -310,7 +430,25 @@ class Booking {
     public Accommodation getAccommodation() { return accommodation; }
     public Boolean isConfirmed() { return confirmed; }
     
-    public void setConfirmed(Boolean confirmed) { this.confirmed = confirmed; }
+    public void setConfirmed(Boolean confirmed) { 
+        this.confirmed = confirmed;
+        try {
+            DatabaseManager.logActivity(customerName, "BOOKING_UPDATE", 
+                "Booking " + id + " status changed to " + (confirmed ? "Confirmed" : "Pending"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void display() {
+        System.out.println("\nBooking ID: " + id);
+        System.out.println("Customer: " + customerName);
+        System.out.println("Contact: " + contact);
+        System.out.println("University: " + university);
+        System.out.println("Status: " + (confirmed ? "Confirmed" : "Pending"));
+        System.out.println("Accommodation Details:");
+        accommodation.displayBasicInformation();
+    }
 }
 
 class HousingManager {
@@ -322,10 +460,10 @@ class HousingManager {
     private Map<String, List<Accommodation>> locationMap;
     private Map<String, List<Accommodation>> typeMap;
 
+    // Swing components
     private JFrame loginFrame, mainFrame, adminFrame;
     private JTextField usernameField, passwordField;
     private JTextArea outputArea;
-    private JScrollPane outputScrollPane;
 
     public HousingManager() {
         DatabaseManager.initializeDatabase();
@@ -352,6 +490,7 @@ class HousingManager {
                     typeMap.computeIfAbsent(acc.getType(), k -> new ArrayList<>()).add(acc);
                 }
             }
+            System.out.println("Loaded " + accommodations.size() + " accommodations from database.");
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error loading accommodations from database: " + e.getMessage(), 
@@ -439,13 +578,16 @@ class HousingManager {
             return new Flat(name, location, rent, wifi, meals, security, rating,
                           laundry, mess, ac, geyser, kitchen, gender,
                           furnished, maintenance);
+        } else {
+            return new Accommodation(name, type, location, rent, wifi, meals, security,
+                                  rating, roomSharing, laundry, mess, ac, geyser,
+                                  kitchen, curfew, gender);
         }
-        return null;
     }
 
     public void showLoginFrame() {
         loginFrame = new JFrame("Student Housing Management System - Login");
-        loginFrame.setSize(400, 300);
+        loginFrame.setSize(400, 350);
         loginFrame.setLayout(null);
         loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -485,6 +627,11 @@ class HousingManager {
         adminButton.addActionListener(e -> handleAdminLogin());
         loginFrame.add(adminButton);
 
+        JButton forgotPassButton = new JButton("Forgot Password?");
+        forgotPassButton.setBounds(150, 240, 120, 30);
+        forgotPassButton.addActionListener(e -> handleForgotPassword());
+        loginFrame.add(forgotPassButton);
+
         loginFrame.setVisible(true);
     }
 
@@ -507,10 +654,11 @@ class HousingManager {
     }
 
     private void handleAdminLogin() {
+        AdminAuthenticator adminAuth = new AdminAuthenticator();
         String username = usernameField.getText();
         String password = passwordField.getText();
         
-        if (authenticator.login(username, password) && authenticator.isAdmin()) {
+        if (adminAuth.login(username, password)) {
             currentUser = username;
             JOptionPane.showMessageDialog(loginFrame, "Admin login successful! Welcome, " + username + "!");
             loginFrame.dispose();
@@ -537,120 +685,770 @@ class HousingManager {
         }
     }
 
+    private void handleForgotPassword() {
+        JFrame forgotPassFrame = new JFrame("Password Recovery");
+        forgotPassFrame.setSize(400, 250);
+        forgotPassFrame.setLayout(null);
+
+        JLabel titleLabel = new JLabel("Password Recovery");
+        titleLabel.setBounds(50, 20, 300, 30);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        forgotPassFrame.add(titleLabel);
+
+        JLabel userLabel = new JLabel("Username:");
+        userLabel.setBounds(50, 70, 100, 25);
+        forgotPassFrame.add(userLabel);
+
+        JTextField userField = new JTextField();
+        userField.setBounds(150, 70, 200, 25);
+        forgotPassFrame.add(userField);
+
+        JButton requestButton = new JButton("Request Reset Link");
+        requestButton.setBounds(50, 120, 150, 30);
+        requestButton.addActionListener(e -> {
+            String username = userField.getText();
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(forgotPassFrame, "Please enter your username");
+                return;
+            }
+            
+            // In a real application, you would send an email with a reset link
+            // Here we'll just simulate it with a dialog
+            String token = generateRandomToken();
+            try {
+                DatabaseManager.addPasswordResetRequest(username, token);
+                JOptionPane.showMessageDialog(forgotPassFrame, 
+                    "Password reset link has been sent (simulated).\n" +
+                    "Token: " + token + "\n" +
+                    "This token will expire in 1 hour.");
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(forgotPassFrame, "Error: " + ex.getMessage());
+            }
+        });
+        forgotPassFrame.add(requestButton);
+
+        JButton resetButton = new JButton("Reset Password");
+        resetButton.setBounds(220, 120, 150, 30);
+        resetButton.addActionListener(e -> {
+            String username = userField.getText();
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(forgotPassFrame, "Please enter your username");
+                return;
+            }
+            
+            String token = JOptionPane.showInputDialog(forgotPassFrame, "Enter your reset token:");
+            if (token == null || token.isEmpty()) {
+                return;
+            }
+            
+            try {
+                if (DatabaseManager.validatePasswordResetToken(username, token)) {
+                    String newPassword = JOptionPane.showInputDialog(forgotPassFrame, "Enter new password:");
+                    if (newPassword != null && !newPassword.isEmpty()) {
+                        if (updatePassword(username, newPassword)) {
+                            DatabaseManager.deletePasswordResetToken(username);
+                            JOptionPane.showMessageDialog(forgotPassFrame, "Password reset successfully!");
+                            forgotPassFrame.dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(forgotPassFrame, "Failed to reset password.");
+                        }
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(forgotPassFrame, "Invalid or expired token.");
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(forgotPassFrame, "Error: " + ex.getMessage());
+            }
+        });
+        forgotPassFrame.add(resetButton);
+
+        JButton backButton = new JButton("Back to Login");
+        backButton.setBounds(150, 170, 150, 30);
+        backButton.addActionListener(e -> forgotPassFrame.dispose());
+        forgotPassFrame.add(backButton);
+
+        forgotPassFrame.setVisible(true);
+    }
+
+    private String generateRandomToken() {
+        return Long.toHexString(Double.doubleToLongBits(Math.random()));
+    }
+
     private void showMainMenu() {
         mainFrame = new JFrame("Student Housing System - Main Menu");
-        mainFrame.setSize(600, 500);
-        mainFrame.setLayout(new BorderLayout());
+        mainFrame.setSize(700, 500);
+        mainFrame.setLayout(null);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel headerPanel = new JPanel();
         JLabel titleLabel = new JLabel("Welcome, " + currentUser + "!");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        headerPanel.add(titleLabel);
-        mainFrame.add(headerPanel, BorderLayout.NORTH);
+        titleLabel.setBounds(50, 20, 300, 30);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        mainFrame.add(titleLabel);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(4, 1, 10, 10));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Accommodation Operations
+        JLabel accLabel = new JLabel("Accommodation Operations:");
+        accLabel.setBounds(50, 60, 200, 20);
+        mainFrame.add(accLabel);
 
-        Font buttonFont = new Font("Arial", Font.BOLD, 14);
-        
-        JButton searchButton = createStyledButton("Search Accommodations", buttonFont);
+        JButton searchButton = new JButton("Search Accommodations");
+        searchButton.setBounds(50, 90, 200, 30);
         searchButton.addActionListener(e -> searchAccommodations());
-        buttonPanel.add(searchButton);
+        mainFrame.add(searchButton);
 
-        JButton viewAllButton = createStyledButton("View All Accommodations", buttonFont);
+        JButton viewAllButton = new JButton("View All Accommodations");
+        viewAllButton.setBounds(50, 130, 200, 30);
         viewAllButton.addActionListener(e -> viewAllAccommodations());
-        buttonPanel.add(viewAllButton);
+        mainFrame.add(viewAllButton);
 
-        JButton filterButton = createStyledButton("Filter Accommodations", buttonFont);
+        JButton filterButton = new JButton("Filter Accommodations");
+        filterButton.setBounds(50, 170, 200, 30);
         filterButton.addActionListener(e -> filterAccommodations());
-        buttonPanel.add(filterButton);
+        mainFrame.add(filterButton);
 
-        JButton logoutButton = createStyledButton("Logout", buttonFont);
+        // User Operations
+        JLabel userLabel = new JLabel("User Operations:");
+        userLabel.setBounds(50, 210, 200, 20);
+        mainFrame.add(userLabel);
+
+        JButton viewBookingsButton = new JButton("View My Bookings");
+        viewBookingsButton.setBounds(50, 240, 200, 30);
+        viewBookingsButton.addActionListener(e -> viewUserBookings());
+        mainFrame.add(viewBookingsButton);
+
+        JButton profileButton = new JButton("My Profile");
+        profileButton.setBounds(50, 280, 200, 30);
+        profileButton.addActionListener(e -> showUserProfile());
+        mainFrame.add(profileButton);
+
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.setBounds(50, 320, 200, 30);
         logoutButton.addActionListener(e -> {
+            try {
+                DatabaseManager.logActivity(currentUser, "LOGOUT", "User logged out");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             currentUser = null;
             mainFrame.dispose();
             showLoginFrame();
         });
-        buttonPanel.add(logoutButton);
+        mainFrame.add(logoutButton);
 
-        mainFrame.add(buttonPanel, BorderLayout.CENTER);
-
-        outputArea = new JTextArea(15, 30);
+        outputArea = new JTextArea();
         outputArea.setEditable(false);
-        outputScrollPane = new JScrollPane(outputArea);
-        outputScrollPane.setVisible(false);
-        mainFrame.add(outputScrollPane, BorderLayout.SOUTH);
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        scrollPane.setBounds(300, 90, 350, 350);
+        mainFrame.add(scrollPane);
 
         mainFrame.setVisible(true);
     }
 
-    private JButton createStyledButton(String text, Font font) {
-        JButton button = new JButton(text);
-        button.setFont(font);
-        button.setPreferredSize(new Dimension(200, 60));
-        button.setBackground(new Color(70, 130, 180));
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        return button;
+    private void showUserProfile() {
+        JFrame profileFrame = new JFrame("My Profile");
+        profileFrame.setSize(400, 300);
+        profileFrame.setLayout(null);
+
+        JLabel titleLabel = new JLabel("User Profile: " + currentUser);
+        titleLabel.setBounds(50, 20, 300, 30);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        profileFrame.add(titleLabel);
+
+        JButton changePassButton = new JButton("Change Password");
+        changePassButton.setBounds(50, 70, 200, 30);
+        changePassButton.addActionListener(e -> changePassword());
+        profileFrame.add(changePassButton);
+
+        JButton viewBookingsButton = new JButton("View My Bookings");
+        viewBookingsButton.setBounds(50, 120, 200, 30);
+        viewBookingsButton.addActionListener(e -> {
+            profileFrame.dispose();
+            viewUserBookings();
+        });
+        profileFrame.add(viewBookingsButton);
+
+        JButton closeButton = new JButton("Close");
+        closeButton.setBounds(50, 170, 200, 30);
+        closeButton.addActionListener(e -> profileFrame.dispose());
+        profileFrame.add(closeButton);
+
+        profileFrame.setVisible(true);
+    }
+
+    private void changePassword() {
+        JFrame passFrame = new JFrame("Change Password");
+        passFrame.setSize(400, 250);
+        passFrame.setLayout(null);
+
+        JLabel titleLabel = new JLabel("Change Password for " + currentUser);
+        titleLabel.setBounds(50, 20, 300, 30);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        passFrame.add(titleLabel);
+
+        JLabel oldPassLabel = new JLabel("Current Password:");
+        oldPassLabel.setBounds(50, 60, 150, 25);
+        passFrame.add(oldPassLabel);
+
+        JPasswordField oldPassField = new JPasswordField();
+        oldPassField.setBounds(200, 60, 150, 25);
+        passFrame.add(oldPassField);
+
+        JLabel newPassLabel = new JLabel("New Password:");
+        newPassLabel.setBounds(50, 100, 150, 25);
+        passFrame.add(newPassLabel);
+
+        JPasswordField newPassField = new JPasswordField();
+        newPassField.setBounds(200, 100, 150, 25);
+        passFrame.add(newPassField);
+
+        JLabel confirmPassLabel = new JLabel("Confirm New Password:");
+        confirmPassLabel.setBounds(50, 140, 150, 25);
+        passFrame.add(confirmPassLabel);
+
+        JPasswordField confirmPassField = new JPasswordField();
+        confirmPassField.setBounds(200, 140, 150, 25);
+        passFrame.add(confirmPassField);
+
+        JButton submitButton = new JButton("Submit");
+        submitButton.setBounds(50, 180, 100, 30);
+        submitButton.addActionListener(e -> {
+            String oldPass = new String(oldPassField.getPassword());
+            String newPass = new String(newPassField.getPassword());
+            String confirmPass = new String(confirmPassField.getPassword());
+
+            if (newPass.isEmpty() || !newPass.equals(confirmPass)) {
+                JOptionPane.showMessageDialog(passFrame, "New passwords don't match or are empty!");
+                return;
+            }
+
+            if (updatePassword(currentUser, oldPass, newPass)) {
+                try {
+                    DatabaseManager.logActivity(currentUser, "PASSWORD_CHANGE", "Password changed");
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                JOptionPane.showMessageDialog(passFrame, "Password changed successfully!");
+                passFrame.dispose();
+            } else {
+                JOptionPane.showMessageDialog(passFrame, "Failed to change password. Check your current password.");
+            }
+        });
+        passFrame.add(submitButton);
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.setBounds(200, 180, 100, 30);
+        cancelButton.addActionListener(e -> passFrame.dispose());
+        passFrame.add(cancelButton);
+
+        passFrame.setVisible(true);
+    }
+
+    private boolean updatePassword(String username, String oldPassword, String newPassword) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            // First verify old password
+            try (PreparedStatement verifyStmt = conn.prepareStatement(
+                    "SELECT * FROM users WHERE username = ? AND password = ?")) {
+                verifyStmt.setString(1, username);
+                verifyStmt.setString(2, oldPassword);
+                ResultSet rs = verifyStmt.executeQuery();
+                
+                if (!rs.next()) {
+                    return false; // Old password doesn't match
+                }
+            }
+            
+            // Update password
+            try (PreparedStatement updateStmt = conn.prepareStatement(
+                    "UPDATE users SET password = ? WHERE username = ?")) {
+                updateStmt.setString(1, newPassword);
+                updateStmt.setString(2, username);
+                int rowsAffected = updateStmt.executeUpdate();
+                return rowsAffected > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean updatePassword(String username, String newPassword) {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "UPDATE users SET password = ? WHERE username = ?")) {
+            
+            stmt.setString(1, newPassword);
+            stmt.setString(2, username);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void viewUserBookings() {
+        List<Booking> userBookings = getUserBookings(currentUser);
+        
+        outputArea.setText(""); // Clear the output area
+        outputArea.append("=== My Bookings ===\n");
+        
+        if (userBookings.isEmpty()) {
+            outputArea.append("No bookings found.");
+        } else {
+            for (Booking booking : userBookings) {
+                outputArea.append("\nBooking ID: " + booking.getId() + "\n");
+                outputArea.append("Accommodation: " + booking.getAccommodation().getName() + 
+                                " (" + booking.getAccommodation().getType() + ")\n");
+                outputArea.append("Location: " + booking.getAccommodation().getLocation() + "\n");
+                outputArea.append("Rent: Rs" + booking.getAccommodation().getRent() + "\n");
+                outputArea.append("Status: " + (booking.isConfirmed() ? "Confirmed" : "Pending") + "\n");
+                outputArea.append("Contact: " + booking.getContact() + "\n");
+                outputArea.append("University: " + booking.getUniversity() + "\n");
+            }
+            
+            // Add cancel booking button if there are bookings
+            JButton cancelButton = new JButton("Cancel Booking");
+            cancelButton.setBounds(50, 360, 200, 30);
+            cancelButton.addActionListener(e -> cancelBooking(userBookings));
+            mainFrame.add(cancelButton);
+            mainFrame.revalidate();
+            mainFrame.repaint();
+        }
+    }
+
+    private List<Booking> getUserBookings(String username) {
+        List<Booking> userBookings = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (booking.getCustomerName().equalsIgnoreCase(username)) {
+                userBookings.add(booking);
+            }
+        }
+        return userBookings;
+    }
+
+    private void cancelBooking(List<Booking> userBookings) {
+        String[] bookingOptions = new String[userBookings.size()];
+        for (int i = 0; i < userBookings.size(); i++) {
+            Booking b = userBookings.get(i);
+            bookingOptions[i] = "ID: " + b.getId() + " - " + b.getAccommodation().getName() + 
+                              " (" + (b.isConfirmed() ? "Confirmed" : "Pending") + ")";
+        }
+        
+        String selected = (String) JOptionPane.showInputDialog(
+            mainFrame,
+            "Select booking to cancel:",
+            "Cancel Booking",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            bookingOptions,
+            bookingOptions[0]);
+        
+        if (selected == null) return;
+        
+        int index = -1;
+        for (int i = 0; i < bookingOptions.length; i++) {
+            if (bookingOptions[i].equals(selected)) {
+                index = i;
+                break;
+            }
+        }
+        
+        if (index == -1) return;
+        
+        Booking booking = userBookings.get(index);
+        
+        int confirm = JOptionPane.showConfirmDialog(
+            mainFrame,
+            "Are you sure you want to cancel booking ID " + booking.getId() + "?",
+            "Confirm Cancellation",
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            deleteBookingFromDatabase(booking);
+            bookings.remove(booking);
+            try {
+                DatabaseManager.logActivity(currentUser, "BOOKING_CANCELLED", 
+                    "Cancelled booking ID " + booking.getId());
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            JOptionPane.showMessageDialog(mainFrame, "Booking cancelled successfully!");
+            viewUserBookings(); // Refresh the view
+        }
+    }
+
+    private void deleteBookingFromDatabase(Booking booking) {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "DELETE FROM bookings WHERE id = ?")) {
+            
+            stmt.setInt(1, booking.getId());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private void showAdminMenu() {
         adminFrame = new JFrame("Admin Panel");
-        adminFrame.setSize(600, 500);
-        adminFrame.setLayout(new BorderLayout());
+        adminFrame.setSize(700, 500);
+        adminFrame.setLayout(null);
         adminFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel headerPanel = new JPanel();
         JLabel titleLabel = new JLabel("Admin Panel - Welcome, " + currentUser + "!");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        headerPanel.add(titleLabel);
-        adminFrame.add(headerPanel, BorderLayout.NORTH);
+        titleLabel.setBounds(50, 20, 300, 30);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        adminFrame.add(titleLabel);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(6, 1, 10, 10));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Accommodation Management
+        JLabel accLabel = new JLabel("Accommodation Management:");
+        accLabel.setBounds(50, 60, 200, 20);
+        adminFrame.add(accLabel);
 
-        Font buttonFont = new Font("Arial", Font.BOLD, 14);
-        
-        JButton addButton = createStyledButton("Add New Accommodation", buttonFont);
+        JButton addButton = new JButton("Add New Accommodation");
+        addButton.setBounds(50, 90, 200, 30);
         addButton.addActionListener(e -> addNewAccommodation());
-        buttonPanel.add(addButton);
+        adminFrame.add(addButton);
 
-        JButton updateButton = createStyledButton("Update Accommodation", buttonFont);
+        JButton updateButton = new JButton("Update Accommodation");
+        updateButton.setBounds(50, 130, 200, 30);
         updateButton.addActionListener(e -> updateAccommodation());
-        buttonPanel.add(updateButton);
+        adminFrame.add(updateButton);
 
-        JButton deleteButton = createStyledButton("Delete Accommodation", buttonFont);
+        JButton deleteButton = new JButton("Delete Accommodation");
+        deleteButton.setBounds(50, 170, 200, 30);
         deleteButton.addActionListener(e -> deleteAccommodation());
-        buttonPanel.add(deleteButton);
+        adminFrame.add(deleteButton);
 
-        JButton viewBookingsButton = createStyledButton("View All Bookings", buttonFont);
+        // Booking Management
+        JLabel bookingLabel = new JLabel("Booking Management:");
+        bookingLabel.setBounds(50, 210, 200, 20);
+        adminFrame.add(bookingLabel);
+
+        JButton viewBookingsButton = new JButton("View All Bookings");
+        viewBookingsButton.setBounds(50, 240, 200, 30);
         viewBookingsButton.addActionListener(e -> viewAllBookings());
-        buttonPanel.add(viewBookingsButton);
+        adminFrame.add(viewBookingsButton);
 
-        JButton confirmBookingButton = createStyledButton("Confirm Booking", buttonFont);
+        JButton confirmBookingButton = new JButton("Confirm Booking");
+        confirmBookingButton.setBounds(50, 280, 200, 30);
         confirmBookingButton.addActionListener(e -> confirmBooking());
-        buttonPanel.add(confirmBookingButton);
+        adminFrame.add(confirmBookingButton);
 
-        JButton logoutButton = createStyledButton("Logout", buttonFont);
+        JButton searchBookingButton = new JButton("Search Bookings");
+        searchBookingButton.setBounds(50, 320, 200, 30);
+        searchBookingButton.addActionListener(e -> searchBookings());
+        adminFrame.add(searchBookingButton);
+
+        // User Management
+        JLabel userLabel = new JLabel("User Management:");
+        userLabel.setBounds(50, 360, 200, 20);
+        adminFrame.add(userLabel);
+
+        JButton manageUsersButton = new JButton("Manage Users");
+        manageUsersButton.setBounds(50, 390, 200, 30);
+        manageUsersButton.addActionListener(e -> manageUsers());
+        adminFrame.add(manageUsersButton);
+
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.setBounds(50, 430, 200, 30);
         logoutButton.addActionListener(e -> {
+            try {
+                DatabaseManager.logActivity(currentUser, "ADMIN_LOGOUT", "Admin logged out");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             currentUser = null;
             adminFrame.dispose();
             showLoginFrame();
         });
-        buttonPanel.add(logoutButton);
+        adminFrame.add(logoutButton);
 
-        adminFrame.add(buttonPanel, BorderLayout.CENTER);
-
-        outputArea = new JTextArea(15, 30);
+        outputArea = new JTextArea();
         outputArea.setEditable(false);
-        outputScrollPane = new JScrollPane(outputArea);
-        outputScrollPane.setVisible(false);
-        adminFrame.add(outputScrollPane, BorderLayout.SOUTH);
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        scrollPane.setBounds(300, 90, 350, 350);
+        adminFrame.add(scrollPane);
 
         adminFrame.setVisible(true);
     }
+
+    private void searchBookings() {
+        JFrame searchFrame = new JFrame("Search Bookings");
+        searchFrame.setSize(400, 250);
+        searchFrame.setLayout(null);
+
+        JLabel titleLabel = new JLabel("Search Bookings");
+        titleLabel.setBounds(50, 20, 300, 30);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        searchFrame.add(titleLabel);
+
+        JButton byUserButton = new JButton("By User");
+        byUserButton.setBounds(50, 70, 150, 30);
+        byUserButton.addActionListener(e -> {
+            searchFrame.dispose();
+            searchBookingsByUser();
+        });
+        searchFrame.add(byUserButton);
+
+        JButton byAccButton = new JButton("By Accommodation");
+        byAccButton.setBounds(220, 70, 150, 30);
+        byAccButton.addActionListener(e -> {
+            searchFrame.dispose();
+            searchBookingsByAccommodation();
+        });
+        searchFrame.add(byAccButton);
+
+        JButton byStatusButton = new JButton("By Status");
+        byStatusButton.setBounds(50, 120, 150, 30);
+        byStatusButton.addActionListener(e -> {
+            searchFrame.dispose();
+            searchBookingsByStatus();
+        });
+        searchFrame.add(byStatusButton);
+
+        JButton backButton = new JButton("Back");
+        backButton.setBounds(220, 120, 150, 30);
+        backButton.addActionListener(e -> searchFrame.dispose());
+        searchFrame.add(backButton);
+
+        searchFrame.setVisible(true);
+    }
+
+    private void searchBookingsByUser() {
+        List<String> userNames = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (!userNames.contains(booking.getCustomerName())) {
+                userNames.add(booking.getCustomerName());
+            }
+        }
+        
+        if (userNames.isEmpty()) {
+            JOptionPane.showMessageDialog(adminFrame, "No bookings found.");
+            return;
+        }
+        
+        String selected = (String) JOptionPane.showInputDialog(
+            adminFrame,
+            "Select user:",
+            "Search Bookings by User",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            userNames.toArray(),
+            userNames.get(0));
+        
+        if (selected == null) return;
+        
+        List<Booking> filtered = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (booking.getCustomerName().equals(selected)) {
+                filtered.add(booking);
+            }
+        }
+        
+        displayBookingList(filtered, "Bookings for " + selected);
+    }
+
+    private void searchBookingsByAccommodation() {
+        List<String> accNames = new ArrayList<>();
+        for (Booking booking : bookings) {
+            String accName = booking.getAccommodation().getName() + " (" + booking.getAccommodation().getType() + ")";
+            if (!accNames.contains(accName)) {
+                accNames.add(accName);
+            }
+        }
+        
+        if (accNames.isEmpty()) {
+            JOptionPane.showMessageDialog(adminFrame, "No bookings found.");
+            return;
+        }
+        
+        String selected = (String) JOptionPane.showInputDialog(
+            adminFrame,
+            "Select accommodation:",
+            "Search Bookings by Accommodation",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            accNames.toArray(),
+            accNames.get(0));
+        
+        if (selected == null) return;
+        
+        List<Booking> filtered = new ArrayList<>();
+        for (Booking booking : bookings) {
+            String accName = booking.getAccommodation().getName() + " (" + booking.getAccommodation().getType() + ")";
+            if (accName.equals(selected)) {
+                filtered.add(booking);
+            }
+        }
+        
+        displayBookingList(filtered, "Bookings for " + selected);
+    }
+
+    private void searchBookingsByStatus() {
+        String[] options = {"Confirmed", "Pending"};
+        String selected = (String) JOptionPane.showInputDialog(
+            adminFrame,
+            "Select status:",
+            "Search Bookings by Status",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+        
+        if (selected == null) return;
+        
+        boolean status = selected.equals("Confirmed");
+        List<Booking> filtered = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (booking.isConfirmed() == status) {
+                filtered.add(booking);
+            }
+        }
+        
+        displayBookingList(filtered, selected + " Bookings");
+    }
+
+    private void displayBookingList(List<Booking> bookingList, String title) {
+        outputArea.setText(""); // Clear the output area
+        outputArea.append("=== " + title + " ===\n");
+        
+        if (bookingList.isEmpty()) {
+            outputArea.append("No bookings found.");
+        } else {
+            for (Booking booking : bookingList) {
+                outputArea.append("\nBooking ID: " + booking.getId() + "\n");
+                outputArea.append("Customer: " + booking.getCustomerName() + "\n");
+                outputArea.append("Accommodation: " + booking.getAccommodation().getName() + 
+                                " (" + booking.getAccommodation().getType() + ")\n");
+                outputArea.append("Status: " + (booking.isConfirmed() ? "Confirmed" : "Pending") + "\n");
+                outputArea.append("Contact: " + booking.getContact() + "\n");
+                outputArea.append("University: " + booking.getUniversity() + "\n");
+            }
+        }
+    }
+
+    private void manageUsers() {
+        List<String> users = getAllUsers();
+        
+        if (users.isEmpty()) {
+            JOptionPane.showMessageDialog(adminFrame, "No users found.");
+            return;
+        }
+        
+        String selected = (String) JOptionPane.showInputDialog(
+            adminFrame,
+            "Select user to manage:",
+            "User Management",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            users.toArray(),
+            users.get(0));
+        
+        if (selected == null) return;
+        
+        if (selected.equals("admin")) {
+            JOptionPane.showMessageDialog(adminFrame, "Cannot modify admin account.");
+            return;
+        }
+        
+        String[] options = {"Reset Password", "Delete User", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(
+            adminFrame,
+            "Manage user: " + selected,
+            "User Options",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+        
+        if (choice == 0) { // Reset Password
+            resetUserPassword(selected);
+        } else if (choice == 1) { // Delete User
+            deleteUser(selected);
+        }
+    }
+
+    private List<String> getAllUsers() {
+        List<String> users = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT username FROM users")) {
+            
+            while (rs.next()) {
+                users.add(rs.getString("username"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    private void resetUserPassword(String username) {
+        String newPassword = JOptionPane.showInputDialog(
+            adminFrame,
+            "Enter new password for " + username + ":",
+            "Reset Password",
+            JOptionPane.QUESTION_MESSAGE);
+        
+        if (newPassword == null || newPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(adminFrame, "Password cannot be empty!");
+            return;
+        }
+        
+        if (updatePassword(username, newPassword)) {
+            try {
+                DatabaseManager.logActivity(currentUser, "ADMIN_PASSWORD_RESET", 
+                    "Reset password for user " + username);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            JOptionPane.showMessageDialog(adminFrame, "Password reset successfully!");
+        } else {
+            JOptionPane.showMessageDialog(adminFrame, "Failed to reset password.");
+        }
+    }
+
+    private void deleteUser(String username) {
+        int confirm = JOptionPane.showConfirmDialog(
+            adminFrame,
+            "Are you sure you want to delete user: " + username + "?",
+            "Confirm User Deletion",
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm != JOptionPane.YES_OPTION) return;
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "DELETE FROM users WHERE username = ?")) {
+            
+            stmt.setString(1, username);
+            int rowsAffected = stmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                try {
+                    DatabaseManager.logActivity(currentUser, "USER_DELETED", 
+                        "Deleted user " + username);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                JOptionPane.showMessageDialog(adminFrame, "User deleted successfully!");
+            } else {
+                JOptionPane.showMessageDialog(adminFrame, "Failed to delete user.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(adminFrame, "Error deleting user: " + e.getMessage());
+        }
+    }
+
+    // [Rest of the methods remain the same as in the previous version]
+    // This includes all the accommodation management methods like:
+    // searchAccommodations(), viewAllAccommodations(), filterAccommodations()
+    // addNewAccommodation(), updateAccommodation(), deleteAccommodation()
+    // confirmBooking(), viewAllBookings(), etc.
+    // These methods remain unchanged from the previous version
+}
 
     private void searchAccommodations() {
         JFrame searchFrame = new JFrame("Search Accommodations");
@@ -710,8 +1508,8 @@ class HousingManager {
     }
 
     private void displayAccommodationList(List<Accommodation> accList, String title) {
-        outputArea.setText("");
-        outputArea.append("=== " + title + " ===\n\n");
+        outputArea.setText(""); // Clear the output area
+        outputArea.append("=== " + title + " ===\n");
         
         if (accList.isEmpty()) {
             outputArea.append("No accommodations found.");
@@ -725,21 +1523,18 @@ class HousingManager {
             }
         }
         
-        outputScrollPane.setVisible(true);
-        
         if (!accList.isEmpty()) {
             JButton viewDetailsButton = new JButton("View Details");
+            viewDetailsButton.setBounds(50, 270, 200, 30);
             viewDetailsButton.addActionListener(e -> viewAccommodationDetails(accList));
-            
-            JPanel buttonPanel = new JPanel();
-            buttonPanel.add(viewDetailsButton);
-            
             if (mainFrame != null) {
-                mainFrame.add(buttonPanel, BorderLayout.CENTER);
+                mainFrame.add(viewDetailsButton);
                 mainFrame.revalidate();
+                mainFrame.repaint();
             } else if (adminFrame != null) {
-                adminFrame.add(buttonPanel, BorderLayout.CENTER);
+                adminFrame.add(viewDetailsButton);
                 adminFrame.revalidate();
+                adminFrame.repaint();
             }
         }
     }
@@ -753,7 +1548,7 @@ class HousingManager {
             if (choice >= 1 && choice <= accList.size()) {
                 Accommodation acc = accList.get(choice-1);
                 
-                outputArea.setText("");
+                outputArea.setText(""); // Clear the output area
                 outputArea.append("\n=== Accommodation Details ===\n");
                 outputArea.append("Type: " + acc.getType() + "\n");
                 outputArea.append("Name: " + acc.getName() + "\n");
@@ -814,7 +1609,7 @@ class HousingManager {
 
     private void bookAccommodation(Accommodation accommodation) {
         JFrame bookFrame = new JFrame("Booking Process");
-        bookFrame.setSize(400, 350);
+        bookFrame.setBounds(0,0,400, 350);
         bookFrame.setLayout(null);
 
         JLabel titleLabel = new JLabel("Booking: " + accommodation.getName());
@@ -866,6 +1661,13 @@ class HousingManager {
             bookings.add(booking);
             saveBookingToDatabase(booking);
             
+            try {
+                DatabaseManager.logActivity(currentUser, "BOOKING_CREATED", 
+                    "Created booking ID " + booking.getId() + " for " + accommodation.getName());
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            
             JOptionPane.showMessageDialog(bookFrame, 
                 "Booking request submitted successfully!\n" +
                 "Your booking ID is: " + booking.getId() + "\n" +
@@ -910,7 +1712,7 @@ class HousingManager {
         }
     }
     
-     private int getAccommodationId(Accommodation acc) {
+    private int getAccommodationId(Accommodation acc) {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                  "SELECT id FROM accommodations WHERE name = ? AND type = ? AND location = ?")) {
@@ -1323,6 +2125,13 @@ class HousingManager {
                 typeMap.computeIfAbsent(type, k -> new ArrayList<>()).add(newAcc);
                 saveAccommodationToDatabase(newAcc);
                 
+                try {
+                    DatabaseManager.logActivity(currentUser, "ACCOMMODATION_ADDED", 
+                        "Added " + type + ": " + name);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                
                 JOptionPane.showMessageDialog(addFrame, "Accommodation added successfully!");
                 addFrame.dispose();
             } catch (NumberFormatException ex) {
@@ -1403,7 +2212,7 @@ class HousingManager {
         }
     }
 
-    private void updateAccommodation() {
+   private void updateAccommodation() {
         if (accommodations.isEmpty()) {
             JOptionPane.showMessageDialog(adminFrame, "No accommodations available to update.");
             return;
