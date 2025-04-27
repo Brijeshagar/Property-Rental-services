@@ -602,12 +602,12 @@ class HousingManager {
         loginFrame.add(passwordField);
 
         JButton loginButton = new JButton("Login");
-        loginButton.setBounds(100, 160, 100, 30);
+        loginButton.setBounds(100, 200, 100, 30);
         loginButton.addActionListener(e -> handleLogin());
         loginFrame.add(loginButton);
 
         JButton registerButton = new JButton("Register");
-        registerButton.setBounds(220, 160, 100, 30);
+        registerButton.setBounds(220, 200, 100, 30);
         registerButton.addActionListener(e -> handleRegistration());
         loginFrame.add(registerButton);
 
@@ -638,20 +638,6 @@ class HousingManager {
         }
     }
 
-    private void handleAdminLogin() {
-        AdminAuthenticator adminAuth = new AdminAuthenticator();
-        String username = usernameField.getText();
-        String password = passwordField.getText();
-        
-        if (adminAuth.login(username, password)) {
-            currentUser = username;
-            JOptionPane.showMessageDialog(loginFrame, "Admin login successful! Welcome, " + username + "!");
-            loginFrame.dispose();
-            showAdminMenu();
-        } else {
-            JOptionPane.showMessageDialog(loginFrame, "Invalid admin credentials. Please try again.");
-        }
-    }
 
     private void handleRegistration() {
         String username = usernameField.getText();
