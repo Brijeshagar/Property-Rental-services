@@ -1335,8 +1335,6 @@ class HousingManager {
         
         if (choice == 0) { // Reset Password
             resetUserPassword(selected);
-        } else if (choice == 1) { // Delete User
-            deleteUser(selected);
         }
     }
 
