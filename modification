@@ -2069,7 +2069,6 @@ class HousingManager {
                 boolean geyser = geyserCheck.isSelected();
                 boolean kitchen = kitchenCheck.isSelected();
                 
-                // Create the appropriate accommodation type
                 Accommodation newAcc;
                 if (type.equals("Hostel")) {
                     int roomSharing = Integer.parseInt(JOptionPane.showInputDialog(addFrame, "Enter room sharing (number of people):"));
