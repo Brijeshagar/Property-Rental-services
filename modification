@@ -19,15 +19,12 @@ public class StudentHousingSystemSwing1 {
 
 abstract class HousingProperty {
     private final String name;
-    
     public HousingProperty(String name) {
         this.name = name;
     }
-    
     public final String getName() {
         return name;
     }
-    
     public abstract void displayBasicInformation();
 }
 
@@ -70,11 +67,21 @@ class Accommodation extends HousingProperty {
         this.gender = gender;
     }
 
-    public String getType() { return type; }
-    public String getLocation() { return location; }
-    public Integer getRent() { return rent; }
-    public Boolean hasWifi() { return wifi; }
-    public Boolean hasMeals() { return meals; }
+    public String getType() { 
+    return type;
+    }
+    public String getLocation() { 
+    return location; 
+    }
+    public Integer getRent() { 
+    return rent; 
+    }
+    public Boolean hasWifi() {
+    return wifi; 
+    }
+    public Boolean hasMeals() { 
+    return meals; 
+    }
     public Boolean hasSecurity() { return security; }
     public Double getRating() { return rating; }
     public Integer getRoomSharing() { return roomSharing; }
@@ -221,20 +228,14 @@ class DatabaseManager {
     public static void initializeDatabase() {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
-            
-            // Create users table
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users (" +
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "username VARCHAR(50) UNIQUE NOT NULL, " +
                               "password VARCHAR(50) NOT NULL, " +
                               "is_admin BOOLEAN DEFAULT FALSE)");
-            
-            // Create admin user if not exists
-            stmt.executeUpdate("INSERT IGNORE INTO users (username, password, is_admin) VALUES " +
+                        stmt.executeUpdate("INSERT IGNORE INTO users (username, password, is_admin) VALUES " +
                               "('admin', 'admin123', TRUE)");
-            
-            // Create accommodations table
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS accommodations (" +
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS accommodations (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "name VARCHAR(100) NOT NULL, " +
                               "type VARCHAR(20) NOT NULL, " +
@@ -259,8 +260,7 @@ class DatabaseManager {
                               "furnished BOOLEAN, " +
                               "maintenance_included BOOLEAN)");
             
-            // Create bookings table
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bookings (" +
+stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bookings (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "customer_name VARCHAR(100) NOT NULL, " +
                               "contact VARCHAR(20) NOT NULL, " +
@@ -269,7 +269,6 @@ class DatabaseManager {
                               "confirmed BOOLEAN DEFAULT FALSE, " +
                               "FOREIGN KEY (accommodation_id) REFERENCES accommodations(id))");
             
-            // Create password reset requests table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS password_reset_requests (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "username VARCHAR(50) NOT NULL, " +
@@ -277,7 +276,6 @@ class DatabaseManager {
                               "expiry DATETIME NOT NULL, " +
                               "FOREIGN KEY (username) REFERENCES users(username))");
             
-            // Create user activity log table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS user_activity_log (" +
                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
                               "username VARCHAR(50) NOT NULL, " +
@@ -785,7 +783,6 @@ class HousingManager {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         mainFrame.add(titleLabel);
 
-        // Accommodation Operations
         JLabel accLabel = new JLabel("Accommodation Operations:");
         accLabel.setBounds(50, 60, 200, 20);
         mainFrame.add(accLabel);
@@ -805,7 +802,6 @@ class HousingManager {
         filterButton.addActionListener(e -> filterAccommodations());
         mainFrame.add(filterButton);
 
-        // User Operations
         JLabel userLabel = new JLabel("User Operations:");
         userLabel.setBounds(50, 210, 200, 20);
         mainFrame.add(userLabel);
@@ -944,7 +940,6 @@ class HousingManager {
 
     private boolean updatePassword(String username, String oldPassword, String newPassword) {
         try (Connection conn = DatabaseManager.getConnection()) {
-            // First verify old password
             try (PreparedStatement verifyStmt = conn.prepareStatement(
                     "SELECT * FROM users WHERE username = ? AND password = ?")) {
                 verifyStmt.setString(1, username);
@@ -956,7 +951,6 @@ class HousingManager {
                 }
             }
             
-            // Update password
             try (PreparedStatement updateStmt = conn.prepareStatement(
                     "UPDATE users SET password = ? WHERE username = ?")) {
                 updateStmt.setString(1, newPassword);
@@ -988,7 +982,7 @@ class HousingManager {
     private void viewUserBookings() {
         List<Booking> userBookings = getUserBookings(currentUser);
         
-        outputArea.setText(""); // Clear the output area
+        outputArea.setText(""); 
         outputArea.append("=== My Bookings ===\n");
         
         if (userBookings.isEmpty()) {
@@ -1005,7 +999,6 @@ class HousingManager {
                 outputArea.append("University: " + booking.getUniversity() + "\n");
             }
             
-            // Add cancel booking button if there are bookings
             JButton cancelButton = new JButton("Cancel Booking");
             cancelButton.setBounds(50, 360, 200, 30);
             cancelButton.addActionListener(e -> cancelBooking(userBookings));
@@ -1099,7 +1092,6 @@ class HousingManager {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         adminFrame.add(titleLabel);
 
-        // Accommodation Management
         JLabel accLabel = new JLabel("Accommodation Management:");
         accLabel.setBounds(50, 60, 200, 20);
         adminFrame.add(accLabel);
@@ -1119,7 +1111,6 @@ class HousingManager {
         deleteButton.addActionListener(e -> deleteAccommodation());
         adminFrame.add(deleteButton);
 
-        // Booking Management
         JLabel bookingLabel = new JLabel("Booking Management:");
         bookingLabel.setBounds(50, 210, 200, 20);
         adminFrame.add(bookingLabel);
@@ -1139,7 +1130,6 @@ class HousingManager {
         searchBookingButton.addActionListener(e -> searchBookings());
         adminFrame.add(searchBookingButton);
 
-        // User Management
         JLabel userLabel = new JLabel("User Management:");
         userLabel.setBounds(50, 360, 200, 20);
         adminFrame.add(userLabel);
@@ -1442,12 +1432,7 @@ class HousingManager {
         }
     }
 
-    // [Rest of the methods remain the same as in the previous version]
-    // This includes all the accommodation management methods like:
-    // searchAccommodations(), viewAllAccommodations(), filterAccommodations()
-    // addNewAccommodation(), updateAccommodation(), deleteAccommodation()
-    // confirmBooking(), viewAllBookings(), etc.
-    // These methods remain unchanged from the previous version
+
 }
 
     private void searchAccommodations() {
@@ -2260,7 +2245,7 @@ class HousingManager {
         if (choice == 5 || choice == -1) return;
         
         switch (choice) {
-            case 0: // Name
+            case 0: 
                 String newName = JOptionPane.showInputDialog(adminFrame, "Enter new name:", acc.getName());
                 if (newName != null && !newName.isEmpty()) {
                     accommodations.set(index, createUpdatedAccommodation(acc, "name", newName));
@@ -2268,7 +2253,7 @@ class HousingManager {
                     JOptionPane.showMessageDialog(adminFrame, "Name updated successfully!");
                 }
                 break;
-            case 1: // Location
+            case 1: 
                 String newLocation = JOptionPane.showInputDialog(adminFrame, "Enter new location:", acc.getLocation());
                 if (newLocation != null && !newLocation.isEmpty()) {
                     accommodations.set(index, createUpdatedAccommodation(acc, "location", newLocation));
@@ -2276,7 +2261,7 @@ class HousingManager {
                     JOptionPane.showMessageDialog(adminFrame, "Location updated successfully!");
                 }
                 break;
-            case 2: // Rent
+            case 2: 
                 String rentStr = JOptionPane.showInputDialog(adminFrame, "Enter new rent:", acc.getRent());
                 try {
                     int newRent = Integer.parseInt(rentStr);
@@ -2287,7 +2272,7 @@ class HousingManager {
                     JOptionPane.showMessageDialog(adminFrame, "Please enter a valid number for rent!");
                 }
                 break;
-            case 3: // Rating
+            case 3:
                 String ratingStr = JOptionPane.showInputDialog(adminFrame, "Enter new rating (1-5):", acc.getRating());
                 try {
                     double newRating = Double.parseDouble(ratingStr);
