@@ -709,9 +709,6 @@ class HousingManager {
                 JOptionPane.showMessageDialog(forgotPassFrame, "Please enter your username");
                 return;
             }
-            
-            // In a real application, you would send an email with a reset link
-            // Here we'll just simulate it with a dialog
             String token = generateRandomToken();
             try {
                 DatabaseManager.addPasswordResetRequest(username, token);
